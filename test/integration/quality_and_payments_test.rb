@@ -142,6 +142,8 @@ class QualityAndPaymentsTest < ActionDispatch::IntegrationTest
     sign_in_as @operator
     get operator_order_path(order)
     assert_select "form[action=?]", operator_sub_order_escalations_path(sub_order)
+    # Con min 1 y paso 1000 el navegador rechaza montos redondos como 100.000.
+    assert_select "input[name='escalation[discount_cop]'][step='1']"
     post operator_sub_order_escalations_path(sub_order), params: { escalation: { decision: "descuento", discount_cop: "", reason: "Medidas" } }
     assert_empty sub_order.escalations.reload
     post operator_sub_order_escalations_path(sub_order), params: { escalation: { decision: "descuento", discount_cop: "100.000", reason: "Medidas fuera de tolerancia" } }

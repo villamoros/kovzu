@@ -46,7 +46,7 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div class="kz-field"><%= f.label :required_on, "Fecha requerida", class: "kz-label" %><%= f.date_field :required_on, class: "kz-input" %></div>
-      <div class="kz-field"><%= f.label :budget_cop, "Presupuesto (COP)", class: "kz-label" %><%= f.number_field :budget_cop, class: "kz-input", min: 1, step: 1000 %></div>
+      <div class="kz-field"><%= f.label :budget_cop, "Presupuesto (COP)", class: "kz-label" %><%= f.number_field :budget_cop, class: "kz-input", min: 1, step: 1 %></div>
     </div>
 
     <div class="kz-field">

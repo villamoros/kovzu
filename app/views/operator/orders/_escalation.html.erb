@@ -46,7 +46,7 @@
       </div>
       <div class="kz-field hidden group-has-[input[value=descuento]:checked]:grid">
         <%= f.label :discount_cop, "Descuento (COP)", class: "kz-label" %>
-        <%= f.number_field :discount_cop, class: "kz-input", min: 1, max: balance - 1, step: 1000, inputmode: "numeric" %>
+        <%= f.number_field :discount_cop, class: "kz-input", min: 1, max: balance - 1, step: 1, inputmode: "numeric" %>
         <p class="kz-hint">Se resta del saldo que el cliente le paga al taller. La comisión se calcula sobre el valor con descuento.</p>
       </div>
       <label class="kz-check hidden group-has-[input[value=cancelar]:checked]:flex">
