@@ -170,7 +170,7 @@ GEM
       actionview (>= 7.0.0)
       activesupport (>= 7.0.0)
     jmespath (1.6.2)
-    json (2.21.2)
+    json (3.1.0)
     jwt (2.10.3)
       base64
     language_server-protocol (3.17.0.6)
@@ -405,7 +405,7 @@ DEPENDENCIES
   dotenv-rails
   importmap-rails
   jbuilder
-  json (~> 2.10)
+  json (~> 3.1)
   pg (~> 1.1)
   prawn (~> 2.5)
   prawn-table (~> 0.2)
