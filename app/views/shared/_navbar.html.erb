@@ -1,0 +1,18 @@
+<header class="sticky top-0 z-50 px-4 pt-4">
+  <nav class="glass mx-auto flex h-14 max-w-6xl items-center justify-between rounded-2xl px-4">
+    <%= link_to root_path, class: "flex items-center gap-2 font-semibold tracking-tight" do %>
+      <span class="grid size-7 place-items-center rounded-lg bg-ink text-canvas text-sm">K</span>
+      <span>Kovzu</span>
+    <% end %>
+
+    <div class="flex items-center gap-2">
+      <% if signed_in? %>
+        <%= link_to "Dashboard", dashboard_path, class: "btn-ghost" %>
+        <div data-controller="clerk" data-clerk-component-value="user-button" class="grid size-8 place-items-center"></div>
+      <% else %>
+        <%= link_to "Entrar", sign_in_path, class: "btn-ghost" %>
+        <%= link_to "Empezar", sign_up_path, class: "btn-primary" %>
+      <% end %>
+    </div>
+  </nav>
+</header>

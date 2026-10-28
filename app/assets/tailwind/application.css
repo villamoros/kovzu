@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/*
+  Base tokens. Placeholder values until the Kovzu design system (brand
+  identity manual) replaces them; components below only use these names.
+*/
+@theme {
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+
+  --color-canvas: oklch(98.5% 0.004 286);
+  --color-surface: oklch(100% 0 0);
+  --color-ink: oklch(18% 0.02 286);
+  --color-muted: oklch(52% 0.02 286);
+  --color-line: oklch(18% 0.02 286 / 0.08);
+  --color-accent: oklch(62% 0.21 286);
+  --color-accent-2: oklch(74% 0.16 210);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-canvas: oklch(15% 0.012 286);
+    --color-surface: oklch(19% 0.014 286);
+    --color-ink: oklch(96% 0.006 286);
+    --color-muted: oklch(70% 0.02 286);
+    --color-line: oklch(100% 0 0 / 0.08);
+  }
+}
+
+@layer base {
+  html {
+    scrollbar-gutter: stable;
+  }
+}
+
+@utility glass {
+  @apply border border-line shadow-sm backdrop-blur-xl;
+  background: color-mix(in oklch, var(--color-surface) 70%, transparent);
+}
+
+@layer components {
+  /* Soft gradient glow + faint grid behind every page */
+  .backdrop {
+    @apply pointer-events-none fixed inset-0 -z-10;
+    background:
+      radial-gradient(60rem 30rem at 50% -10%, color-mix(in oklch, var(--color-accent) 22%, transparent), transparent 70%),
+      radial-gradient(40rem 24rem at 90% 10%, color-mix(in oklch, var(--color-accent-2) 16%, transparent), transparent 70%),
+      linear-gradient(var(--color-line) 1px, transparent 1px) 0 0 / 56px 56px,
+      linear-gradient(90deg, var(--color-line) 1px, transparent 1px) 0 0 / 56px 56px;
+    mask-image: linear-gradient(to bottom, black, transparent 75%);
+  }
+
+  .card {
+    @apply rounded-2xl border border-line bg-surface/80 p-6 shadow-[0_1px_0_0_var(--color-line),0_12px_32px_-16px_oklch(0%_0_0/0.18)] backdrop-blur;
+  }
+
+  .chip {
+    @apply glass flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium text-muted;
+  }
+
+  .btn-primary {
+    @apply inline-flex h-9 items-center rounded-xl bg-ink px-4 text-sm font-medium text-canvas transition hover:opacity-90 active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply inline-flex h-9 items-center rounded-xl px-4 text-sm font-medium transition hover:bg-ink/5 active:scale-[0.98];
+  }
+
+  .btn-lg {
+    @apply h-11 rounded-2xl px-6 text-base;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(110deg, var(--color-accent), var(--color-accent-2));
+  }
+}
