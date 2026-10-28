@@ -35,6 +35,25 @@ class QualityAndPaymentsTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "HU-05: el enlace del taller abre en un celular viejo, el resto de la app no" do
+    sub_order = start_order.sub_orders.first
+    ready_sheet!(sub_order)
+    quote = sub_order.request_quotes!([ create_workshop("Cartón Valle", category: sub_order.category).id ], by: "Ana").first
+    old_android = "Mozilla/5.0 (Linux; Android 9; SM-J600G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Mobile Safari/537.36"
+
+    get workshop_quote_path(quote.token), headers: { "User-Agent" => old_android }
+    assert_response :success
+    assert_select "form[action=?]", workshop_quote_path(quote.token)
+
+    patch workshop_quote_path(quote.token), headers: { "User-Agent" => old_android },
+      params: { quote: { price_cop: "950000", lead_days: "8", valid_until: Date.current + 5 }, accept_sheet: "1" }
+    assert_redirected_to workshop_quote_path(quote.token)
+    assert quote.reload.recibida?
+
+    get root_path, headers: { "User-Agent" => old_android }
+    assert_response :not_acceptable
+  end
+
   test "HU-05: el enlace vencido pide uno nuevo y el operador lo renueva" do
     sub_order = start_order.sub_orders.first
     ready_sheet!(sub_order)
