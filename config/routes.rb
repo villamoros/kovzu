@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
   root "home#index"
 
+  # Reportes de la política de seguridad de contenido (config/initializers/content_security_policy.rb).
+  post "csp-reports", to: "csp_reports#create"
+
   # Clerk's hosted components are mounted on these pages
   get "sign-in(/*rest)", to: "sessions#sign_in", as: :sign_in
   get "sign-up(/*rest)", to: "sessions#sign_up", as: :sign_up

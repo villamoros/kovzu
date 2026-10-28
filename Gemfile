@@ -41,6 +41,10 @@ gem "bootsnap", require: false
 # Archivos en Cloudflare R2 (compatible con S3) en producción
 gem "aws-sdk-s3", require: false
 
+# Errores de producción en Sentry, solo si existe SENTRY_DSN
+gem "sentry-ruby"
+gem "sentry-rails"
+
 group :development, :test do
   # Load .env into ENV locally
   gem "dotenv-rails"
