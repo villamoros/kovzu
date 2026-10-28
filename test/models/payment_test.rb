@@ -14,6 +14,31 @@ class PaymentTest < ActiveSupport::TestCase
     assert_raises(SubOrder::TransitionError) { pay!(@sub_order, "anticipo") }
   end
 
+  test "dos pestañas que registran el anticipo a la vez guardan un solo pago" do
+    tab_a = SubOrder.find(@sub_order.id)
+    tab_b = SubOrder.find(@sub_order.id)
+    tab_b.payments.load
+
+    pay!(tab_a, "anticipo")
+    error = assert_raises(SubOrder::TransitionError) { pay!(tab_b, "anticipo") }
+    assert_match "Ya hay un anticipo registrado", error.message
+    assert_equal 1, @sub_order.payments.count
+  end
+
+  test "la base de datos rechaza un segundo pago vigente del mismo tipo y una segunda comisión activa" do
+    payment = pay!(@sub_order, "anticipo")
+    copy = payment.dup
+    copy.support.attach(fixture_upload("soporte.pdf", "application/pdf"))
+    assert_raises(ActiveRecord::RecordNotUnique) { copy.save!(validate: false) }
+
+    payment.void!("Transferencia devuelta", by: "Ana")
+    assert pay!(@sub_order.reload, "anticipo").vigente?, "anulado el anterior, se puede registrar otro"
+
+    sub_order = approved_sub_order
+    commission = pay!(sub_order, "saldo").commission
+    assert_raises(ActiveRecord::RecordNotUnique) { commission.dup.save!(validate: false) }
+  end
+
   test "HU-19: un valor distinto del pactado advierte y pide confirmar" do
     error = assert_raises(Payment::AmountMismatch) { pay!(@sub_order, "anticipo", amount: 450_000) }
     assert_match "$ 500.000", error.message

@@ -23,6 +23,33 @@ class EscalationTest < ActiveSupport::TestCase
     assert_raises(Escalation::TransitionError) { decide("cancelar") }
   end
 
+  test "dos operadores que deciden a la vez no aplican dos salidas" do
+    other_tab = SubOrder.find(@sub_order.id)
+    decide("reasignar")
+
+    error = assert_raises(Escalation::TransitionError) { Escalation.decide!(other_tab, decision: "cancelar", reason: "Otra salida", by: "Pedro") }
+    assert_match "no está escalado", error.message
+    assert @sub_order.reload.cotizando?
+    assert_equal 1, @sub_order.escalations.count
+  end
+
+  test "la base de datos rechaza un segundo descuento esperando al cliente" do
+    escalation = decide("descuento", discount_cop: 100_000)
+    assert_raises(ActiveRecord::RecordNotUnique) { escalation.dup.save!(validate: false) }
+
+    error = assert_raises(Escalation::TransitionError) { decide("descuento", discount_cop: 50_000) }
+    assert_equal Escalation::PENDING_DISCOUNT, error.message
+  end
+
+  test "un doble clic en aceptar el descuento no lo aplica dos veces" do
+    escalation = decide("descuento", discount_cop: 100_000)
+    other_tab = Escalation.find(escalation.id)
+
+    escalation.accept_discount!(user: @client)
+    assert_raises(Escalation::TransitionError) { other_tab.accept_discount!(user: @client) }
+    assert_equal 1, escalation.approvals.count
+  end
+
   test "RN-06 / RN-05: reasignar saca al taller, deja el anticipo por devolver y reinicia el conteo de rechazos" do
     advance = @sub_order.payment(:anticipo)
     escalation = decide("reasignar")

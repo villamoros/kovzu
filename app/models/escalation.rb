@@ -8,6 +8,7 @@ class Escalation < ApplicationRecord
     "descuento" => "Negociar un descuento",
     "cancelar" => "Cancelar el subpedido"
   }.freeze
+  PENDING_DISCOUNT = "Ya hay un descuento esperando la respuesta del cliente.".freeze
 
   enum :status, StatusCatalog.enum_for(:escalation), default: "aplicada", validate: true
 
@@ -37,31 +38,35 @@ class Escalation < ApplicationRecord
   def refund_pending? = refund_cop.to_i.positive? && refund_received_on.nil?
 
   # El operador decide. Reasignar y cancelar se aplican de una vez; el descuento espera al cliente.
+  # Bloquea el subpedido: dos operadores que deciden a la vez no aplican dos salidas.
   def self.decide!(sub_order, decision:, reason:, by:, discount_cop: nil, fee_refunded: false)
-    raise TransitionError, "El subpedido no está escalado." unless sub_order.escalado?
-    raise TransitionError, "Ya hay un descuento esperando la respuesta del cliente." if sub_order.escalations.esperando_cliente.exists?
+    escalation = sub_order.with_lock do
+      raise TransitionError, "El subpedido no está escalado." unless sub_order.escalado?
+      raise TransitionError, PENDING_DISCOUNT if sub_order.escalations.esperando_cliente.exists?
 
-    escalation = sub_order.escalations.build(decision:, reason:, decided_by: by, workshop: sub_order.workshop,
-                                             discount_cop: (discount_cop if decision == "descuento"),
-                                             fee_refunded: decision == "cancelar" && ActiveModel::Type::Boolean.new.cast(fee_refunded).present?)
-    escalation.validate!
-    escalation.check_discount!
+      escalation = sub_order.escalations.build(decision:, reason:, decided_by: by, workshop: sub_order.workshop,
+                                               discount_cop: (discount_cop if decision == "descuento"),
+                                               fee_refunded: decision == "cancelar" && ActiveModel::Type::Boolean.new.cast(fee_refunded).present?)
+      escalation.validate!
+      escalation.check_discount!
 
-    transaction do
       escalation.save!
       escalation.send(:"apply_#{decision}!", by)
       AuditEvent.record!(sub_order.order, "pedido.escalado_#{decision}", actor: by,
                          data: { sub_order: sub_order.title, workshop: escalation.workshop.name, reason:, discount_cop: escalation.discount_cop }.compact)
+      escalation
     end
     escalation.notify_client
     escalation
+  rescue ActiveRecord::RecordNotUnique
+    raise TransitionError, PENDING_DISCOUNT
   end
 
   # El cliente acepta el descuento: el lote se recibe y el saldo baja.
   def accept_discount!(user:)
-    raise TransitionError, "Este descuento ya no espera tu respuesta." unless esperando_cliente?
+    with_lock do
+      raise TransitionError, "Este descuento ya no espera tu respuesta." unless esperando_cliente?
 
-    transaction do
       approvals.create!(decision: "aceptada", actor_role: "cliente", actor_name: user.name, user:, comment: "Descuento de #{discount_cop}")
       update!(status: "aplicada", client_decided_by: user.name, client_decided_at: Time.current)
       sub_order.update!(status: "aprobado", discount_cop:)
@@ -74,10 +79,11 @@ class Escalation < ApplicationRecord
 
   # El cliente no acepta: el subpedido sigue escalado y el operador decide otra salida.
   def reject_discount!(comment, user:)
-    raise TransitionError, "Este descuento ya no espera tu respuesta." unless esperando_cliente?
     raise TransitionError, "Cuéntanos por qué no aceptas el descuento." if comment.blank?
 
-    transaction do
+    with_lock do
+      raise TransitionError, "Este descuento ya no espera tu respuesta." unless esperando_cliente?
+
       approvals.create!(decision: "rechazada", actor_role: "cliente", actor_name: user.name, user:, comment:)
       update!(status: "rechazada", client_comment: comment, client_decided_by: user.name, client_decided_at: Time.current)
       AuditEvent.record!(order, "pedido.descuento_rechazado", actor: user.name, data: { sub_order: sub_order.title })
