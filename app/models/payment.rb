@@ -41,13 +41,14 @@ class Payment < ApplicationRecord
 
   # Anula el pago. Si era el saldo, también anula la comisión que causó, si aún no se facturó.
   def void!(reason, by:)
-    raise TransitionError, "Este pago ya está anulado." if anulado?
     raise TransitionError, "Escribe el motivo de la anulación." if reason.blank?
-    if commission && !commission.causada?
-      raise TransitionError, "La comisión de este saldo ya está #{commission.status_label.downcase}. Corrígela en la cartera antes de anular."
-    end
 
-    transaction do
+    with_lock do
+      raise TransitionError, "Este pago ya está anulado." if anulado?
+      if commission && !commission.causada?
+        raise TransitionError, "La comisión de este saldo ya está #{commission.status_label.downcase}. Corrígela en la cartera antes de anular."
+      end
+
       update!(status: "anulado", void_reason: reason, voided_by: by, voided_at: Time.current)
       commission&.update!(status: "anulada", void_reason: "Saldo anulado: #{reason}")
       sub_order.reopen_after_void!(self)

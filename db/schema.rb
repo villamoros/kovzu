@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_10_28_140100) do
+ActiveRecord::Schema[8.0].define(version: 2026_10_28_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -126,6 +126,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_140100) do
     t.index ["payment_id"], name: "index_commissions_on_payment_id"
     t.index ["status"], name: "index_commissions_on_status"
     t.index ["sub_order_id"], name: "index_commissions_on_sub_order_id"
+    t.index ["sub_order_id"], name: "index_commissions_one_active_per_sub_order", unique: true, where: "((status)::text <> 'anulada'::text)"
     t.index ["workshop_id"], name: "index_commissions_on_workshop_id"
   end
 
@@ -146,6 +147,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_140100) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["sub_order_id"], name: "index_escalations_on_sub_order_id"
+    t.index ["sub_order_id"], name: "index_escalations_one_pending_discount", unique: true, where: "((status)::text = 'esperando_cliente'::text)"
     t.index ["workshop_id"], name: "index_escalations_on_workshop_id"
   end
 
@@ -245,6 +247,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_140100) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["sub_order_id", "kind", "status"], name: "index_payments_on_sub_order_id_and_kind_and_status"
+    t.index ["sub_order_id", "kind"], name: "index_payments_one_active_per_kind", unique: true, where: "((status)::text = 'vigente'::text)"
     t.index ["sub_order_id"], name: "index_payments_on_sub_order_id"
   end
 

@@ -59,7 +59,10 @@ class Proposal < ApplicationRecord
       raise TransitionError, "La cotización del taller venció. Ya le avisamos a KOVZU para renovarla."
     end
 
-    transaction do
+    # Bloquea la propuesta: un doble clic o dos pestañas no la aceptan dos veces.
+    with_lock do
+      raise TransitionError, "Esta propuesta ya no está abierta." unless enviada?
+
       approvals.create!(decision: "aceptada", actor_role: "cliente", actor_name: user.name, user:, version: tech_sheet.version)
       accept_tech_sheet!(user)
       update!(status: "aceptada", decided_at: Time.current)
@@ -78,7 +81,9 @@ class Proposal < ApplicationRecord
     raise TransitionError, "Esta propuesta ya no está abierta." unless enviada?
     raise TransitionError, "Cuéntanos qué quieres cambiar." if comment.blank?
 
-    transaction do
+    with_lock do
+      raise TransitionError, "Esta propuesta ya no está abierta." unless enviada?
+
       approvals.create!(decision: "cambios_solicitados", actor_role: "cliente", actor_name: user.name, user:,
                         version: tech_sheet.version, comment:)
       update!(status: "cambios_solicitados", change_request: comment, decided_at: Time.current)

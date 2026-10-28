@@ -47,6 +47,16 @@ class ProposalTest < ActiveSupport::TestCase
     assert_equal BusinessDays.add(Date.current, 12), @order.promised_on
   end
 
+  test "un doble clic en aceptar no acepta la propuesta dos veces" do
+    proposal = send_proposal(@sub_order)
+    other_tab = Proposal.find(proposal.id)
+
+    proposal.accept!(user: @client)
+    assert_raises(Proposal::TransitionError) { other_tab.accept!(user: @client) }
+    assert_raises(Proposal::TransitionError) { other_tab.request_changes!("Otro color", user: @client) }
+    assert_equal 1, proposal.approvals.count
+  end
+
   test "HU-07: pedir cambios devuelve la propuesta al operador sin causar el fee" do
     proposal = send_proposal(@sub_order)
 

@@ -128,21 +128,23 @@ class SubOrder < ApplicationRecord
   def register_payment!(kind:, amount_cop:, paid_on:, support:, by:, notes: nil, confirm_mismatch: false)
     kind = kind.to_s
     raise TransitionError, "Tipo de pago no válido." unless Payment::KINDS.key?(kind)
-    raise TransitionError, "Ya hay un #{Payment::KINDS[kind].downcase} registrado. Anúlalo para registrar otro." if payment(kind)
-    if kind == "anticipo"
-      raise TransitionError, "El anticipo se registra con el pedido confirmado y antes de la muestra." unless anticipo_pendiente?
-    else
-      raise TransitionError, "El saldo se habilita cuando el acta de inspección queda aprobada." unless aprobado?
-    end
 
-    record = Payment.new(sub_order: self, kind:, amount_cop:, paid_on:, support:, notes:, registered_by: by, expected_cop: expected_payment_cop(kind))
-    record.validate!
-    if record.mismatch? && !ActiveModel::Type::Boolean.new.cast(confirm_mismatch)
-      expected = ActiveSupport::NumberHelper.number_to_currency(record.expected_cop, locale: :es)
-      raise Payment::AmountMismatch, "El valor no coincide con lo pactado (#{expected}). Revísalo y confirma si es correcto."
-    end
+    # Bloquea el subpedido: dos pestañas que registran el mismo pago a la vez no guardan dos pagos ni dos comisiones.
+    record = with_lock do
+      raise TransitionError, duplicate_payment_message(kind) if payment(kind)
+      if kind == "anticipo"
+        raise TransitionError, "El anticipo se registra con el pedido confirmado y antes de la muestra." unless anticipo_pendiente?
+      else
+        raise TransitionError, "El saldo se habilita cuando el acta de inspección queda aprobada." unless aprobado?
+      end
 
-    transaction do
+      record = Payment.new(sub_order: self, kind:, amount_cop:, paid_on:, support:, notes:, registered_by: by, expected_cop: expected_payment_cop(kind))
+      record.validate!
+      if record.mismatch? && !ActiveModel::Type::Boolean.new.cast(confirm_mismatch)
+        expected = ActiveSupport::NumberHelper.number_to_currency(record.expected_cop, locale: :es)
+        raise Payment::AmountMismatch, "El valor no coincide con lo pactado (#{expected}). Revísalo y confirma si es correcto."
+      end
+
       record.save!
       if kind == "anticipo"
         update!(status: "muestra_pendiente")
@@ -152,9 +154,12 @@ class SubOrder < ApplicationRecord
       end
       AuditEvent.record!(self, "pago.registrado", actor: by,
                          data: { kind:, amount_cop: record.amount_cop, difference_cop: record.mismatch? ? record.difference_cop : nil }.compact)
+      record
     end
     payments.reset
     record
+  rescue ActiveRecord::RecordNotUnique
+    raise TransitionError, duplicate_payment_message(kind)
   end
 
   # Al anular un pago, el subpedido vuelve al paso anterior si nada avanzó desde entonces.
@@ -196,4 +201,8 @@ class SubOrder < ApplicationRecord
   end
 
   def status_label = StatusCatalog.label(:sub_order, status)
+
+  private
+
+  def duplicate_payment_message(kind) = "Ya hay un #{Payment::KINDS[kind].downcase} registrado. Anúlalo para registrar otro."
 end
