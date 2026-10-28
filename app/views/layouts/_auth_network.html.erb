@@ -1,0 +1,40 @@
+<%# Fondo del panel de acceso: la retícula de 8 px y rutas ortogonales entre talleres (ruta B «Red productiva» del manual). -%>
+<svg class="kz-auth__network" viewBox="0 0 720 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+  <defs>
+    <pattern id="kz-auth-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" class="kz-auth__grid"/>
+    </pattern>
+    <radialGradient id="kz-auth-fade" cx="0.28" cy="0.5" r="0.62">
+      <stop offset="0" stop-color="#0B1F33" stop-opacity="0.92"/>
+      <stop offset="0.55" stop-color="#0B1F33" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#0B1F33" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="720" height="900" fill="url(#kz-auth-grid)"/>
+
+  <g class="kz-auth__routes">
+    <path d="M40 120H280V240H480V80H720"/>
+    <path d="M720 360H600V520H520"/>
+    <path d="M0 640H200V760H400V840H720"/>
+    <path d="M520 900V680H600V520"/>
+    <path d="M280 900V760"/>
+  </g>
+  <path class="kz-auth__flow" d="M520 900V680H600V520H720"/>
+  <path class="kz-auth__flow kz-auth__flow--late" d="M40 120H280V240H480V80"/>
+
+  <rect width="720" height="900" fill="url(#kz-auth-fade)"/>
+
+  <g class="kz-auth__nodes">
+    <rect x="275" y="235" width="10" height="10" rx="2"/>
+    <rect x="515" y="515" width="10" height="10" rx="2"/>
+    <rect x="195" y="755" width="10" height="10" rx="2"/>
+    <rect x="395" y="755" width="10" height="10" rx="2"/>
+    <rect x="595" y="675" width="10" height="10" rx="2"/>
+  </g>
+  <g class="kz-auth__nodes kz-auth__nodes--accent">
+    <rect x="474" y="74" width="12" height="12" rx="2"/>
+    <rect x="594" y="514" width="12" height="12" rx="2"/>
+    <rect x="274" y="754" width="12" height="12" rx="2"/>
+  </g>
+</svg>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <%= render "layouts/head" %>
+  </head>
+
+  <%# Entrar y crear cuenta: panel de marca a la izquierda y la tarjeta de Clerk a la derecha. -%>
+  <body class="min-h-dvh bg-ground text-ink font-sans antialiased">
+    <div class="kz-auth">
+      <div class="kz-auth__tools">
+        <button type="button" class="kz-btn kz-btn--ghost kz-btn--icon" data-controller="theme" data-action="theme#toggle" aria-label="Cambiar tema">
+          <%= kz_glyph :moon, size: 18, class: "dark:hidden" %>
+          <%= kz_glyph :sun, size: 18, class: "hidden dark:block" %>
+        </button>
+      </div>
+
+      <aside class="kz-auth__aside">
+        <%= render "layouts/auth_network" %>
+
+        <%= link_to root_path, class: "kz-auth__brand", aria: { label: "KOVZU, inicio" } do %>
+          <%= kz_logo :lockup %>
+        <% end %>
+
+        <div class="kz-auth__pitch">
+          <%= yield :aside %>
+        </div>
+
+        <p class="kz-auth__foot">KOVZU · Cali, Colombia</p>
+      </aside>
+
+      <main class="kz-auth__main">
+        <div class="kz-auth__panel">
+          <%= render "kz/flash" %>
+          <%= yield %>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
