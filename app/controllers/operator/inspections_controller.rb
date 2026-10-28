@@ -1,6 +1,8 @@
 module Operator
   # HU-12: inspección desde el celular. Se guarda el avance y se cierra con el resultado; cerrada no cambia.
   class InspectionsController < BaseController
+    inspector_can :show, :create, :progress, :close
+
     before_action :set_inspection, only: %i[show progress close]
 
     def create

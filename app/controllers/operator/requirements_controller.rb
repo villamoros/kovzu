@@ -1,5 +1,7 @@
 module Operator
   class RequirementsController < BaseController
+    inspector_can :index, :show
+
     TABS = { "cola" => "En cola", "completo" => "Completos", "no_viable" => "No viables" }.freeze
 
     before_action :set_requirement, except: %i[index new create]

@@ -3,6 +3,8 @@
 class FileAccess
   # Lo que ve el cliente de su propia empresa. Los soportes de pago y las cotizaciones del taller son internos.
   CLIENT_RECORDS = %w[Requirement Sample Inspection InspectionItem].freeze
+  # Soportes de pago (con datos bancarios) y cotizaciones cargadas: solo operador y administrador, no el inspector.
+  OPERATOR_RECORDS = %w[Payment Quote].freeze
 
   def initialize(attachment)
     @attachment = attachment
@@ -10,7 +12,8 @@ class FileAccess
 
   # quote: la cotización del enlace del taller, cuando el archivo se pide desde esa página.
   def allowed?(user:, quote: nil)
-    return true if user&.staff?
+    return true if user&.operador? || user&.admin?
+    return !attachment.record_type.in?(OPERATOR_RECORDS) if user&.inspector?
     return workshop_can_open?(quote) if quote
 
     client_can_open?(user)

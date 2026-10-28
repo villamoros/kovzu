@@ -45,6 +45,8 @@ bin/rails kovzu:client EMAIL=tu@correo.com COMPANY="Aroma de Café SAS"   # port
 
 Al sembrar, la consola imprime el enlace `/cotizar/...` que vería el taller Cartón Valle.
 
+Roles del equipo: `operador` y `admin` hacen todo. `inspector` ve el tablero, los pedidos, los requerimientos y los talleres, marca la producción terminada e inspecciona, pero no registra ni anula pagos, no ve comisiones ni soportes de pago, no envía propuestas ni cotizaciones y no verifica talleres. Para probarlo: `bin/rails kovzu:operator EMAIL=tu@correo.com ROLE=inspector`.
+
 ## Correos
 
 Salen por Resend (SMTP) con `RESEND_API_KEY`. En desarrollo solo se envían si además defines `DEV_MAIL_TO`, y todos llegan a ese buzón. Sin un dominio verificado en Resend, solo se entregan al correo de tu cuenta de Resend.

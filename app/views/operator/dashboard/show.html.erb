@@ -5,10 +5,10 @@
 
 <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-8">
   <%= render "kz/page_header", overline: "Operación · #{kz_date(Date.current)}", title: "Tablero",
-        actions: safe_join([
+        actions: (safe_join([
           link_to(safe_join([ kz_glyph(:plus), "Registrar requerimiento" ]), new_operator_requirement_path, class: "kz-btn kz-btn--primary"),
           link_to("Nuevo taller", new_operator_workshop_path, class: "kz-btn kz-btn--outline")
-        ]) %>
+        ]) if can_operate?) %>
 
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
     <%= link_to operator_requirements_path, class: "contents" do %>
@@ -45,7 +45,7 @@
       <%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %>
       <div>
         <p class="kz-alert__title"><%= late_workshops.map(&:name).to_sentence %> en mora con comisiones</p>
-        <p class="kz-alert__body">Más de <%= Commission::DELINQUENT_DAYS %> días sin pagar: sus asignaciones quedan en pausa. <%= link_to "Ver cartera", operator_commissions_path, class: "kz-link" %></p>
+        <p class="kz-alert__body">Más de <%= Commission::DELINQUENT_DAYS %> días sin pagar: sus asignaciones quedan en pausa. <%= link_to "Ver cartera", operator_commissions_path, class: "kz-link" if can_operate? %></p>
       </div>
     </div>
   <% end %>

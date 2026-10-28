@@ -2,7 +2,7 @@
 
 <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
   <%= render "kz/page_header", overline: "Operación", title: "Requerimientos",
-        actions: link_to(safe_join([ kz_glyph(:plus), "Registrar requerimiento" ]), new_operator_requirement_path, class: "kz-btn kz-btn--primary") %>
+        actions: (link_to(safe_join([ kz_glyph(:plus), "Registrar requerimiento" ]), new_operator_requirement_path, class: "kz-btn kz-btn--primary") if can_operate?) %>
 
   <nav class="kz-tabs" aria-label="Estado">
     <% Operator::RequirementsController::TABS.each do |key, label| %>

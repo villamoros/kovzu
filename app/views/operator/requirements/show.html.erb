@@ -60,6 +60,7 @@
     </div>
 
     <aside class="grid gap-4">
+      <% if can_operate? %>
       <% if @requirement.en_revision? %>
         <%= form_with url: complete_operator_requirement_path(@requirement), class: "kz-card kz-card__body grid gap-4" do %>
           <h2 class="kz-h3">Marcar completo</h2>
@@ -123,6 +124,7 @@
             <button class="kz-btn kz-btn--danger">Cerrar requerimiento</button>
           <% end %>
         </details>
+      <% end %>
       <% end %>
 
       <%= render "shared/requirement_files", requirement: @requirement %>

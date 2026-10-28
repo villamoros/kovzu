@@ -28,6 +28,7 @@
       </div>
     </div>
 
+    <% if can_operate? %>
     <%= form_with model: Escalation.new, url: operator_sub_order_escalations_path(sub_order), class: "grid gap-4 group max-w-2xl" do |f| %>
       <div class="grid gap-2" role="radiogroup" aria-label="Decisión">
         <% balance = sub_order.expected_payment_cop(:saldo) %>
@@ -59,6 +60,7 @@
       </div>
       <button class="kz-btn kz-btn--primary justify-self-start" data-turbo-confirm="¿Registrar la decisión? Le avisamos al cliente.">Registrar decisión</button>
     <% end %>
+    <% end %>
   <% end %>
 
   <% if sub_order.escalations.any? %>
@@ -78,7 +80,7 @@
             <span class="text-ink-muted">Respuesta del cliente: <%= escalation.client_decided_by %>, <%= kz_date(escalation.client_decided_at.to_date) %><%= ". “#{escalation.client_comment}”" if escalation.client_comment.present? %></span>
           <% end %>
           <% if escalation.fee_refunded? %><span class="text-ink-muted">Se devuelve el fee de gestión al cliente.</span><% end %>
-          <% if escalation.refund_pending? %>
+          <% if can_operate? && escalation.refund_pending? %>
             <%= form_with url: refund_operator_escalation_path(escalation), class: "flex flex-wrap items-end gap-2 rounded-xl bg-warning-soft/40 px-4 py-3" do %>
               <p class="grow basis-56 text-sm"><strong><%= escalation.workshop.name %></strong> debe devolver el anticipo de <strong><%= kz_money(escalation.refund_cop) %></strong>.</p>
               <div class="kz-field">
