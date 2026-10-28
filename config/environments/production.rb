@@ -22,7 +22,12 @@ Rails.application.configure do
   # config.asset_host = "http://assets.example.com"
 
   # Archivos en un bucket privado de Cloudflare R2: el disco del servidor se borra en cada despliegue.
+  # Sin las variables R2_* la app no arranca, con un mensaje claro, en vez de guardar en disco y perder archivos.
+  # La compilación de assets (SECRET_KEY_BASE_DUMMY) no las necesita.
   config.active_storage.service = :cloudflare
+  if ENV["SECRET_KEY_BASE_DUMMY"].blank? && (missing = %w[R2_ENDPOINT R2_BUCKET R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY].select { |name| ENV[name].blank? }).any?
+    abort "Falta configurar Cloudflare R2 para los archivos: #{missing.join(', ')}. Ver la sección Producción del README."
+  end
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   config.assume_ssl = true
@@ -81,12 +86,10 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
-  # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
-  #
-  # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  # Protección contra DNS rebinding y cabeceras Host falsas: solo el dominio público (APP_HOST)
+  # y los que se agreguen en ALLOWED_HOSTS, separados por comas. Sin APP_HOST no se restringe.
+  config.hosts += [ ENV["APP_HOST"].to_s, *ENV["ALLOWED_HOSTS"].to_s.split(",") ].map(&:strip).compact_blank
+
+  # El chequeo de salud /up responde con cualquier host (el balanceador del hosting no usa el dominio).
+  config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end
