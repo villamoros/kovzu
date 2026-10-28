@@ -16,21 +16,29 @@ function loadClerk() {
   return clerkReady
 }
 
+// Maps KOVZU design tokens (app/assets/tailwind/kovzu/tokens.css) onto Clerk's theme.
 function appearance() {
   const css = getComputedStyle(document.documentElement)
-  const token = (name, fallback) => css.getPropertyValue(name).trim() || fallback
+  const token = (name) => css.getPropertyValue(name).trim()
 
   return {
     variables: {
-      colorPrimary: token("--color-accent", "#7c5cff"),
-      colorBackground: token("--color-surface", "#ffffff"),
-      colorText: token("--color-ink", "#0b0b10"),
-      borderRadius: "0.875rem",
-      fontFamily: token("--font-sans", "system-ui")
+      colorPrimary: token("--accent"),
+      colorTextOnPrimaryBackground: token("--on-accent"),
+      colorBackground: token("--surface"),
+      colorInputBackground: token("--surface"),
+      colorText: token("--ink"),
+      colorTextSecondary: token("--ink-muted"),
+      colorInputText: token("--ink"),
+      colorDanger: token("--danger"),
+      colorSuccess: token("--success"),
+      colorWarning: token("--warning"),
+      borderRadius: "0.5rem",
+      fontFamily: token("--font-sans")
     },
     elements: {
-      card: "shadow-none",
-      rootBox: "w-full"
+      rootBox: "w-full",
+      cardBox: "w-full shadow-none border border-line"
     }
   }
 }

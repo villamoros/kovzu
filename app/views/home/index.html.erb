@@ -1,35 +1,25 @@
-<% content_for :title, "Kovzu" %>
+<% content_for :title, "KOVZU" %>
 
-<section class="mx-auto max-w-6xl px-4 pt-24 pb-16 sm:pt-32">
-  <p class="chip mx-auto w-fit">
-    <span class="size-1.5 rounded-full bg-accent"></span>
-    En construcción
+<section class="mx-auto max-w-6xl px-4 pt-20 pb-12 sm:pt-28">
+  <p class="kz-overline">Producción por encargo</p>
+  <h1 class="kz-display mt-4 max-w-3xl">Tus pedidos, con talleres verificados y cada paso a la vista.</h1>
+  <p class="mt-6 max-w-xl text-lg text-ink-muted text-pretty">
+    Cuéntanos qué necesitas fabricar. Te mostramos qué pasó, qué sigue y quién debe actuar en cada pedido.
   </p>
 
-  <h1 class="mx-auto mt-6 max-w-3xl text-balance text-center text-5xl font-semibold tracking-tighter sm:text-7xl">
-    Kovzu
-    <span class="text-gradient">empieza aquí.</span>
-  </h1>
-
-  <p class="mx-auto mt-6 max-w-xl text-pretty text-center text-lg text-muted">
-    Base de la app lista: Rails 8, Hotwire, Tailwind 4 y Clerk. El contenido y la identidad visual llegan con el sistema de diseño.
-  </p>
-
-  <div class="mt-10 flex justify-center gap-3">
-    <%= link_to "Crear cuenta", sign_up_path, class: "btn-primary btn-lg" %>
-    <%= link_to "Ya tengo cuenta", sign_in_path, class: "btn-ghost btn-lg" %>
+  <div class="mt-10 flex flex-wrap gap-3">
+    <%= link_to sign_up_path, class: "kz-btn kz-btn--primary kz-btn--lg" do %>
+      Crear cuenta <%= kz_glyph :arrow %>
+    <% end %>
+    <%= link_to "Ya tengo cuenta", sign_in_path, class: "kz-btn kz-btn--outline kz-btn--lg" %>
   </div>
 </section>
 
-<section class="mx-auto grid max-w-6xl gap-4 px-4 pb-24 sm:grid-cols-3">
-  <% [
-    [ "Rails 8", "Hotwire, Solid Queue, Solid Cache y Solid Cable." ],
-    [ "Clerk", "Login, registro y perfil sin escribir formularios." ],
-    [ "PostgreSQL", "Local en desarrollo, Neon o Supabase en producción." ]
-  ].each do |title, body| %>
-    <article class="card">
-      <h2 class="font-medium tracking-tight"><%= title %></h2>
-      <p class="mt-1 text-sm text-muted"><%= body %></p>
-    </article>
-  <% end %>
+<section class="mx-auto max-w-6xl px-4 pb-24">
+  <p class="kz-overline">Capacidades</p>
+  <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <% KzHelper::CAPABILITIES.each_key do |capability| %>
+      <div class="kz-card p-6"><%= kz_capability capability %></div>
+    <% end %>
+  </div>
 </section>

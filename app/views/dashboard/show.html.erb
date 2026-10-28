@@ -1,17 +1,18 @@
-<% content_for :title, "Dashboard · Kovzu" %>
+<% content_for :title, "Inicio · KOVZU" %>
 
-<section class="mx-auto max-w-6xl px-4 py-16">
-  <p class="text-sm text-muted">Dashboard</p>
-  <h1 class="mt-1 text-3xl font-semibold tracking-tight">Hola, <%= current_user.first_name.presence || current_user.name %></h1>
+<section class="mx-auto max-w-6xl px-4 py-12">
+  <p class="kz-overline">Inicio</p>
+  <h1 class="kz-h1 mt-2">Hola, <%= current_user.first_name.presence || current_user.name %></h1>
 
   <div class="mt-8 grid gap-4 sm:grid-cols-3">
-    <article class="card sm:col-span-2">
-      <h2 class="font-medium">Todo listo</h2>
-      <p class="mt-1 text-sm text-muted">Tu sesión viene de Clerk y tu usuario ya está guardado en PostgreSQL.</p>
-    </article>
-    <article class="card">
-      <p class="text-sm text-muted">Email</p>
-      <p class="mt-1 truncate font-mono text-sm"><%= current_user.email %></p>
-    </article>
+    <%= render "kz/stat", label: "Pedidos activos", value: "0", tone: :info %>
+    <%= render "kz/stat", label: "En producción", value: "0", tone: :info %>
+    <%= render "kz/stat", label: "Por revisar", value: "0", tone: :warning %>
+  </div>
+
+  <div class="kz-card mt-6 p-6">
+    <h2 class="kz-h3">Aún no tienes pedidos</h2>
+    <p class="mt-1 text-ink-muted">Tu cuenta está lista. Aquí verás cada pedido con su estado y sus hitos.</p>
+    <p class="mt-4 text-sm text-ink-muted">Sesión iniciada como <span class="font-medium text-ink"><%= current_user.email %></span></p>
   </div>
 </section>
