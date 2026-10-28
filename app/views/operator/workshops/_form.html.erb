@@ -1,0 +1,81 @@
+<%# locals: (workshop:, submit:, cancel:) -%>
+<%= form_with model: workshop, url: (workshop.persisted? ? operator_workshop_path(workshop) : operator_workshops_path), class: "grid grid-cols-1 gap-6" do |f| %>
+  <%= render "operator/shared/errors", record: workshop %>
+
+  <section class="kz-card kz-card__body grid grid-cols-1 gap-5">
+    <h2 class="kz-h3">Datos del taller</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4">
+      <div class="kz-field"><%= f.label :name, "Nombre", class: "kz-label" %><%= f.text_field :name, class: "kz-input", required: true %></div>
+      <div class="kz-field"><%= f.label :nit, "NIT", class: "kz-label" %><%= f.text_field :nit, class: "kz-input", placeholder: "900123456-7" %></div>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="kz-field"><%= f.label :contact_name, "Contacto", class: "kz-label" %><%= f.text_field :contact_name, class: "kz-input" %></div>
+      <div class="kz-field"><%= f.label :email, "Correo", class: "kz-label" %><%= f.email_field :email, class: "kz-input" %></div>
+      <div class="kz-field"><%= f.label :phone, "Teléfono", class: "kz-label" %><%= f.telephone_field :phone, class: "kz-input" %></div>
+      <div class="kz-field"><%= f.label :whatsapp, "WhatsApp", class: "kz-label" %><%= f.telephone_field :whatsapp, class: "kz-input" %></div>
+      <div class="kz-field"><%= f.label :address, "Dirección", class: "kz-label" %><%= f.text_field :address, class: "kz-input" %></div>
+      <div class="kz-field"><%= f.label :neighborhood, "Barrio", class: "kz-label" %><%= f.text_field :neighborhood, class: "kz-input" %></div>
+    </div>
+    <div class="kz-field">
+      <%= f.label :machines, "Máquinas y capacidad", class: "kz-label" %>
+      <%= f.text_area :machines, class: "kz-textarea", placeholder: "2 troqueladoras, 1 guillotina, capacidad 3.000 u./día" %>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+      <div class="kz-field">
+        <%= f.label :level, "Nivel", class: "kz-label" %>
+        <div class="kz-select-wrap"><%= f.select :level, Workshop::LEVELS.invert, { include_blank: "Sin nivel" }, class: "kz-select" %></div>
+        <p class="kz-hint">Ordena a los candidatos al cotizar.</p>
+      </div>
+      <div class="kz-field">
+        <%= f.label :score, "Puntaje (0 a 5)", class: "kz-label" %>
+        <%= f.number_field :score, class: "kz-input", min: 0, max: 5, step: 0.1 %>
+      </div>
+    </div>
+  </section>
+
+  <section class="kz-card kz-card__body grid grid-cols-1 gap-4">
+    <div class="grid gap-1">
+      <h2 class="kz-h3">Checklist de verificación</h2>
+      <p class="text-sm text-ink-muted">Con todo marcado, el taller puede pasar a verificación. Solo queda verificado con RUT y factura electrónica.</p>
+    </div>
+    <label class="kz-check"><%= f.check_box :has_rut %><span>RUT activo</span></label>
+    <label class="kz-check"><%= f.check_box :e_invoicing %><span>Factura electrónica</span></label>
+    <%= f.fields_for :visit_checklist do |checklist| %>
+      <% Workshop::VISIT_ITEMS.each do |key, label| %>
+        <label class="kz-check"><%= checklist.check_box key, { checked: workshop.visit_item?(key) }, "1", "0" %><span><%= label %></span></label>
+      <% end %>
+    <% end %>
+  </section>
+
+  <section class="kz-card kz-card__body grid grid-cols-1 gap-5">
+    <div class="grid gap-1">
+      <h2 class="kz-h3">Capacidades</h2>
+      <p class="text-sm text-ink-muted">Una fila por categoría. El volumen filtra a qué subpedidos puede cotizar; déjalo vacío si no tiene límite.</p>
+    </div>
+    <%= f.fields_for :capabilities do |cap| %>
+      <fieldset class="grid grid-cols-1 gap-4 border-t border-line pt-5 first-of-type:border-0 first-of-type:pt-0">
+        <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4">
+          <div class="kz-field">
+            <%= cap.label :category_id, "Categoría", class: "kz-label" %>
+            <div class="kz-select-wrap"><%= cap.collection_select :category_id, Category.active, :id, :name, { include_blank: "Elige una categoría" }, class: "kz-select" %></div>
+          </div>
+          <div class="kz-field"><%= cap.label :min_volume, "Mínimo (u.)", class: "kz-label" %><%= cap.number_field :min_volume, class: "kz-input", min: 1 %></div>
+          <div class="kz-field"><%= cap.label :max_volume, "Máximo (u.)", class: "kz-label" %><%= cap.number_field :max_volume, class: "kz-input", min: 1 %></div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="kz-field"><%= cap.label :processes, "Procesos", class: "kz-label" %><%= cap.text_field :processes, class: "kz-input", placeholder: "Troquelado, plegado" %></div>
+          <div class="kz-field"><%= cap.label :materials, "Materiales", class: "kz-label" %><%= cap.text_field :materials, class: "kz-input", placeholder: "Cartón, propalcote" %></div>
+          <div class="kz-field"><%= cap.label :tolerances, "Tolerancias", class: "kz-label" %><%= cap.text_field :tolerances, class: "kz-input", placeholder: "± 1 mm" %></div>
+        </div>
+        <% if cap.object.persisted? %>
+          <label class="kz-check w-fit"><%= cap.check_box :_destroy %><span>Quitar esta capacidad</span></label>
+        <% end %>
+      </fieldset>
+    <% end %>
+  </section>
+
+  <div class="flex flex-wrap justify-end gap-2">
+    <%= link_to "Cancelar", cancel, class: "kz-btn kz-btn--ghost" %>
+    <button class="kz-btn kz-btn--primary"><%= submit %></button>
+  </div>
+<% end %>

@@ -1,0 +1,165 @@
+es:
+  date:
+    abbr_day_names: [dom, lun, mar, mié, jue, vie, sáb]
+    abbr_month_names: [~, ene, feb, mar, abr, may, jun, jul, ago, sep, oct, nov, dic]
+    day_names: [domingo, lunes, martes, miércoles, jueves, viernes, sábado]
+    month_names: [~, enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre, diciembre]
+    formats:
+      default: "%d/%m/%Y"
+      short: "%-d %b"
+      long: "%-d de %B de %Y"
+    order: [day, month, year]
+
+  time:
+    am: am
+    pm: pm
+    formats:
+      default: "%d/%m/%Y %H:%M"
+      short: "%-d %b %H:%M"
+      long: "%-d de %B de %Y %H:%M"
+
+  number:
+    format:
+      delimiter: "."
+      separator: ","
+      precision: 2
+    currency:
+      format:
+        unit: "$ "
+        format: "%u%n"
+        delimiter: "."
+        separator: ","
+        precision: 0
+
+  support:
+    array:
+      words_connector: ", "
+      two_words_connector: " y "
+      last_word_connector: " y "
+
+  errors:
+    format: "%{attribute} %{message}"
+    messages:
+      accepted: debe ser aceptado
+      blank: no puede estar en blanco
+      confirmation: no coincide
+      empty: no puede estar vacío
+      equal_to: debe ser igual a %{count}
+      even: debe ser par
+      exclusion: está reservado
+      greater_than: debe ser mayor que %{count}
+      greater_than_or_equal_to: debe ser mayor o igual a %{count}
+      in: debe estar entre %{count}
+      inclusion: no es una opción válida
+      invalid: no es válido
+      less_than: debe ser menor que %{count}
+      less_than_or_equal_to: debe ser menor o igual a %{count}
+      model_invalid: "La validación falló: %{errors}"
+      not_a_number: no es un número
+      not_an_integer: debe ser un número entero
+      odd: debe ser impar
+      other_than: debe ser distinto de %{count}
+      present: debe estar en blanco
+      required: debe existir
+      taken: ya está en uso
+      too_long: es demasiado largo (máximo %{count} caracteres)
+      too_short: es demasiado corto (mínimo %{count} caracteres)
+      wrong_length: no tiene la longitud correcta (%{count} caracteres)
+
+  activerecord:
+    errors:
+      messages:
+        record_invalid: "La validación falló: %{errors}"
+        restrict_dependent_destroy:
+          has_one: No se puede borrar porque tiene un %{record} asociado
+          has_many: No se puede borrar porque tiene %{record} asociados
+    models:
+      category: Categoría
+      client_company: Cliente
+      workshop: Taller
+      workshop_capability: Capacidad
+      requirement: Requerimiento
+      order: Pedido
+      sub_order: Subpedido
+      tech_sheet: Ficha técnica
+      quote: Cotización
+      milestone: Hito
+    attributes:
+      client_company:
+        name: Nombre
+        nit: NIT
+      workshop:
+        name: Nombre
+        nit: NIT
+        status: Estado
+        level: Nivel
+        score: Puntaje
+        email: Correo
+        capabilities: Capacidades
+      workshop/capabilities:
+        category: Categoría
+        category_id: Categoría
+        min_volume: Volumen mínimo
+        max_volume: Volumen máximo
+      workshop_capability:
+        category: Categoría
+        category_id: Categoría
+        min_volume: Volumen mínimo
+        max_volume: Volumen máximo
+      requirement:
+        client_company: Cliente
+        category: Categoría
+        title: Qué necesita fabricar
+        quantity: Cantidad
+        required_on: Fecha requerida
+        budget_cop: Presupuesto
+        channel: Canal
+      order:
+        code: Código
+        client_company: Cliente
+      sub_order:
+        title: Título
+        quantity: Cantidad
+      tech_sheet:
+        acceptance_criteria: Criterios de aceptación
+        fields: Campos
+        version: Versión
+      quote:
+        workshop: Taller
+        price_cop: Precio
+        lead_days: Plazo
+      milestone:
+        committed_on: Fecha comprometida
+        reschedule_reason: Motivo
+        rescheduled_by: Responsable
+
+  helpers:
+    select:
+      prompt: Elige una opción
+    submit:
+      create: Crear %{model}
+      update: Guardar %{model}
+      submit: Guardar
+
+  # Bitácora (AuditEvent#action)
+  audit:
+    pedido:
+      creado: Pedido creado
+      confirmado: Pedido confirmado
+    cotizacion:
+      solicitada: Cotizaciones solicitadas
+    ficha:
+      lista: Ficha técnica lista
+      nueva_version: Nueva versión de la ficha
+    requerimiento:
+      registrado: Requerimiento registrado
+      aclaracion_pendiente: Se pidió aclaración al cliente
+      respondido: El cliente respondió
+      completo: Requerimiento completo
+      no_viable: Cerrado como no viable
+    taller:
+      registrado: Taller registrado
+      en_verificacion: Pasó a verificación
+      verificado: Taller verificado
+      pausado: Taller pausado
+      retirado: Retirado de la red

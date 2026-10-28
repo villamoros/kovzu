@@ -1,4 +1,6 @@
 class User < ApplicationRecord
+  include KovzuRoles
+
   validates :clerk_id, presence: true, uniqueness: true
 
   def self.sync_from_clerk(clerk_user)

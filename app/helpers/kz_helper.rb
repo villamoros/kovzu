@@ -1,33 +1,6 @@
 # Helpers del sistema de diseño KOVZU: logo, iconos de capacidad y estados.
 # Las clases CSS están en app/assets/tailwind/kovzu/components.css.
 module KzHelper
-  # Tono de cada estado: neutral (gris), info (azul), warning (ámbar),
-  # success (verde) y danger (rojo, solo excepciones).
-  # Provisional hasta cerrar el modelo de datos del paso 2.
-  ORDER_STATUSES = {
-    "en_revision"             => { label: "En revisión",             tone: :neutral },
-    "esperando_cliente"       => { label: "Esperando cliente",       tone: :warning },
-    "cotizando"               => { label: "Cotizando",               tone: :info },
-    "propuesta_enviada"       => { label: "Propuesta enviada",       tone: :info },
-    "muestra_pendiente"       => { label: "Muestra pendiente",       tone: :warning },
-    "en_produccion"           => { label: "En producción",           tone: :info },
-    "inspeccion"              => { label: "Inspección",              tone: :warning },
-    "aprobado_con_desviacion" => { label: "Aprobado con desviación", tone: :warning },
-    "rechazado"               => { label: "Rechazado",               tone: :danger },
-    "reproceso"               => { label: "Reproceso",               tone: :danger },
-    "despachado"              => { label: "Despachado",              tone: :info },
-    "entregado"               => { label: "Entregado",               tone: :success },
-    "cancelado"               => { label: "Cancelado",               tone: :neutral }
-  }.freeze
-
-  WORKSHOP_STATUSES = {
-    "prospecto"       => { label: "Prospecto",       tone: :neutral },
-    "en_verificacion" => { label: "En verificación", tone: :info },
-    "verificado"      => { label: "Verificado",      tone: :success },
-    "pausado"         => { label: "Pausado",         tone: :warning },
-    "retirado"        => { label: "Retirado",        tone: :neutral }
-  }.freeze
-
   CAPABILITIES = {
     "corte"         => "Corte y conformado",
     "impresion"     => "Impresión y etiquetas",
@@ -69,13 +42,20 @@ module KzHelper
     "#{value.day} #{MONTHS[value.month - 1]}"
   end
 
-  # <%= kz_status "en_produccion" %>
-  # <%= kz_status "verificado", kind: :workshop %>
+  # <%= kz_status order.status %>
+  # <%= kz_status sub_order.status, kind: :sub_order %>
+  # Tipos: :order, :sub_order, :requirement, :tech_sheet, :quote, :workshop (ver StatusCatalog).
   def kz_status(key, kind: :order, label: nil)
-    catalog = kind == :workshop ? WORKSHOP_STATUSES : ORDER_STATUSES
-    status = catalog.fetch(key.to_s) { { label: key.to_s.humanize, tone: :neutral } }
+    status = StatusCatalog.fetch(kind, key)
     tone_class = "kz-status--#{status[:tone]}" unless status[:tone] == :neutral
     tag.span(label || status[:label], class: [ "kz-status", tone_class ])
+  end
+
+  # Pesos colombianos: "$ 1.250.000"
+  def kz_money(value)
+    return "—" if value.nil?
+
+    number_to_currency(value, unit: "$ ", delimiter: ".", separator: ",", precision: 0, format: "%u%n")
   end
 
   # <%= kz_logo %>                       símbolo + KOVZU

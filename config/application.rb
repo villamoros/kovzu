@@ -21,7 +21,10 @@ module Kovzu
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
+    # Colombia: hora de Bogotá y textos en español.
+    config.time_zone = "Bogota"
+    config.i18n.default_locale = :es
+    config.i18n.available_locales = [ :es, :en ]
     # config.eager_load_paths << Rails.root.join("extras")
   end
 end

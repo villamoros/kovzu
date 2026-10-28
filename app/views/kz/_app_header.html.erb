@@ -6,8 +6,9 @@
   <% end %>
 
   <nav class="kz-appbar__nav" aria-label="Principal">
+    <% current = items.map(&:last).select { |path| request.path == path || request.path.start_with?("#{path}/") }.max_by(&:length) %>
     <% items.each do |label, path| %>
-      <%= link_to label, path, aria: { current: (current_page?(path) ? "page" : nil) } %>
+      <%= link_to label, path, aria: { current: (path == current ? "page" : nil) } %>
     <% end %>
   </nav>
 

@@ -1,0 +1,126 @@
+<% content_for :title, "#{@requirement.title} · KOVZU" %>
+<% company = @requirement.client_company %>
+
+<div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "operator/shared/page_header", back: [ "Requerimientos", operator_requirements_path ],
+        overline: "Requerimiento · #{company.name}", title: @requirement.title,
+        status: kz_status(@requirement.status, kind: :requirement) %>
+
+  <% if @requirement.tight_deadline? %>
+    <div class="kz-alert kz-alert--warning" role="status">
+      <%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %>
+      <div><p class="kz-alert__title">Fecha ajustada</p><p class="kz-alert__body">El cliente lo necesita el <%= kz_date(@requirement.required_on) %>, antes del plazo mínimo de <%= @requirement.category.name %> (<%= @requirement.category.min_lead_days %> días hábiles).</p></div>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6 items-start">
+    <div class="grid gap-6">
+      <article class="kz-sheet">
+        <header class="kz-sheet__head">
+          <span class="kz-overline">Lo que pidió el cliente</span>
+          <span class="text-xs text-ink-muted">Por <%= Requirement::CHANNELS[@requirement.channel] %> · <%= kz_date(@requirement.submitted_at.to_date) %></span>
+        </header>
+        <dl class="kz-sheet__grid">
+          <div class="kz-sheet__row"><dt>Categoría</dt><dd class="<%= "is-pending" unless @requirement.category %>"><%= @requirement.category&.name || "Sin clasificar" %></dd></div>
+          <div class="kz-sheet__row"><dt>Cantidad</dt><dd><%= @requirement.quantity ? "#{number_with_delimiter(@requirement.quantity, delimiter: ".")} u." : "—" %></dd></div>
+          <div class="kz-sheet__row"><dt>Medidas</dt><dd><%= @requirement.dimensions.presence || "—" %></dd></div>
+          <div class="kz-sheet__row"><dt>Material</dt><dd><%= @requirement.material.presence || "—" %></dd></div>
+          <div class="kz-sheet__row"><dt>Acabado</dt><dd><%= @requirement.finish.presence || "—" %></dd></div>
+          <div class="kz-sheet__row"><dt>Fecha requerida</dt><dd><%= kz_date(@requirement.required_on) || "—" %></dd></div>
+          <div class="kz-sheet__row"><dt>Presupuesto</dt><dd><%= kz_money(@requirement.budget_cop) %></dd></div>
+          <div class="kz-sheet__row kz-sheet__row--wide"><dt>Descripción</dt><dd><%= simple_format(@requirement.description.presence || "—", {}, wrapper_tag: "span") %></dd></div>
+        </dl>
+        <footer class="kz-sheet__foot">
+          <span><%= company.name %></span>
+          <% if company.contact_name %><span><%= company.contact_name %></span><% end %>
+          <% if @requirement.rejection_reason %><span>Motivo: <%= @requirement.rejection_reason %></span><% end %>
+        </footer>
+      </article>
+
+      <section class="kz-card">
+        <div class="kz-card__header"><h2 class="kz-card__title">Aclaraciones</h2></div>
+        <div class="kz-card__body">
+          <% if @requirement.messages.empty? %>
+            <p class="text-sm text-ink-muted">Sin preguntas al cliente.</p>
+          <% else %>
+            <ol class="grid gap-4">
+              <% @requirement.messages.each do |message| %>
+                <li class="grid gap-1">
+                  <span class="kz-overline"><%= message.author_role == "operador" ? "Pregunta" : "Respuesta" %> · <%= message.author_name %> · <%= kz_date(message.created_at.to_date) %></span>
+                  <p class="text-sm"><%= message.body %></p>
+                </li>
+              <% end %>
+            </ol>
+          <% end %>
+        </div>
+      </section>
+    </div>
+
+    <aside class="grid gap-4">
+      <% if @requirement.en_revision? %>
+        <%= form_with url: complete_operator_requirement_path(@requirement), class: "kz-card kz-card__body grid gap-4" do %>
+          <h2 class="kz-h3">Marcar completo</h2>
+          <p class="text-sm text-ink-muted">Tiene lo necesario para hacer la ficha técnica y cotizar.</p>
+          <div class="kz-field">
+            <label class="kz-label" for="category_id">Categoría</label>
+            <div class="kz-select-wrap"><%= select_tag :category_id, options_from_collection_for_select(@categories, :id, :name, @requirement.category_id), include_blank: "Elige una categoría", class: "kz-select", required: true %></div>
+          </div>
+          <button class="kz-btn kz-btn--primary">Marcar completo</button>
+        <% end %>
+
+        <%= form_with url: clarify_operator_requirement_path(@requirement), class: "kz-card kz-card__body grid gap-4" do %>
+          <h2 class="kz-h3">Pedir aclaración</h2>
+          <div class="kz-field">
+            <label class="kz-label" for="questions">Preguntas para el cliente</label>
+            <%= text_area_tag :questions, nil, class: "kz-textarea", required: true, placeholder: "¿Qué tallas necesitas y cuántas de cada una?" %>
+            <p class="kz-hint">Queda en el historial y el requerimiento pasa a "Esperando cliente".</p>
+          </div>
+          <button class="kz-btn kz-btn--outline">Guardar preguntas</button>
+        <% end %>
+      <% end %>
+
+      <% if @requirement.esperando_cliente? %>
+        <%= form_with url: answer_operator_requirement_path(@requirement), class: "kz-card kz-card__body grid gap-4" do %>
+          <h2 class="kz-h3">Registrar respuesta</h2>
+          <p class="text-sm text-ink-muted">Si el cliente respondió por WhatsApp o correo, cópiala aquí.</p>
+          <div class="kz-field">
+            <label class="kz-label" for="answer">Respuesta</label>
+            <%= text_area_tag :answer, nil, class: "kz-textarea", required: true %>
+          </div>
+          <div class="kz-field">
+            <label class="kz-label" for="answered_by">Quién respondió <small>(opcional)</small></label>
+            <%= text_field_tag :answered_by, company.contact_name, class: "kz-input" %>
+          </div>
+          <button class="kz-btn kz-btn--primary">Registrar y volver a revisión</button>
+        <% end %>
+      <% end %>
+
+      <% if @requirement.completo? %>
+        <div class="kz-card kz-card__body grid gap-3">
+          <% if @requirement.order %>
+            <h2 class="kz-h3">Pedido <%= @requirement.order.code %></h2>
+            <p class="text-sm text-ink-muted">Este requerimiento ya tiene pedido.</p>
+            <%= link_to "Ver pedido", operator_order_path(@requirement.order), class: "kz-btn kz-btn--secondary" %>
+          <% else %>
+            <h2 class="kz-h3">Siguiente paso</h2>
+            <p class="text-sm text-ink-muted">Crea el pedido y su ficha técnica con la plantilla de <%= @requirement.category.name %>.</p>
+            <%= button_to "Crear pedido y ficha técnica", start_order_operator_requirement_path(@requirement), class: "kz-btn kz-btn--primary w-full" %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if @requirement.en_revision? || @requirement.esperando_cliente? %>
+        <details class="kz-card">
+          <summary class="px-6 py-4 cursor-pointer text-sm font-medium text-ink-muted">Cerrar como no viable</summary>
+          <%= form_with url: reject_operator_requirement_path(@requirement), class: "px-6 pb-6 grid gap-4" do %>
+            <div class="kz-field">
+              <label class="kz-label" for="reason">Motivo para el cliente</label>
+              <%= text_area_tag :reason, nil, class: "kz-textarea", required: true, placeholder: "Ningún taller de la red trabaja este material." %>
+            </div>
+            <button class="kz-btn kz-btn--danger">Cerrar requerimiento</button>
+          <% end %>
+        </details>
+      <% end %>
+    </aside>
+  </div>
+</div>

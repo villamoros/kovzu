@@ -1,0 +1,62 @@
+<% content_for :title, "Registrar requerimiento · KOVZU" %>
+
+<div class="mx-auto max-w-3xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "operator/shared/page_header", back: [ "Requerimientos", operator_requirements_path ],
+        overline: "Fase 0 · llegó por WhatsApp o correo", title: "Registrar requerimiento" %>
+
+  <%= form_with model: @requirement, url: operator_requirements_path, class: "kz-card kz-card__body grid grid-cols-1 gap-5" do |f| %>
+    <%= render "operator/shared/errors", record: @requirement %>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="kz-field">
+        <%= f.label :client_company_id, "Cliente", class: "kz-label" %>
+        <div class="kz-select-wrap"><%= f.collection_select :client_company_id, ClientCompany.order(:name), :id, :name, { include_blank: "Elige un cliente" }, class: "kz-select" %></div>
+      </div>
+      <div class="kz-field">
+        <label class="kz-label" for="requirement_client_company_name">O un cliente nuevo <small>(nombre)</small></label>
+        <%= text_field_tag "requirement[client_company_name]", params.dig(:requirement, :client_company_name), class: "kz-input", id: "requirement_client_company_name" %>
+      </div>
+    </div>
+
+    <div class="kz-field">
+      <%= f.label :title, "Qué necesita fabricar", class: "kz-label" %>
+      <%= f.text_field :title, class: "kz-input", required: true, placeholder: "Caja plegadiza para 500 frascos" %>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="kz-field">
+        <%= f.label :category_id, "Categoría", class: "kz-label" %>
+        <div class="kz-select-wrap"><%= f.collection_select :category_id, Category.active, :id, :name, { include_blank: "No estoy seguro" }, class: "kz-select" %></div>
+      </div>
+      <div class="kz-field">
+        <%= f.label :quantity, "Cantidad", class: "kz-label" %>
+        <%= f.number_field :quantity, class: "kz-input", min: 1 %>
+      </div>
+      <div class="kz-field">
+        <%= f.label :channel, "Canal", class: "kz-label" %>
+        <div class="kz-select-wrap"><%= f.select :channel, Requirement::CHANNELS.invert, {}, class: "kz-select" %></div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="kz-field"><%= f.label :dimensions, "Medidas", class: "kz-label" %><%= f.text_field :dimensions, class: "kz-input", placeholder: "120 × 80 × 45 mm" %></div>
+      <div class="kz-field"><%= f.label :material, "Material", class: "kz-label" %><%= f.text_field :material, class: "kz-input" %></div>
+      <div class="kz-field"><%= f.label :finish, "Acabado", class: "kz-label" %><%= f.text_field :finish, class: "kz-input" %></div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="kz-field"><%= f.label :required_on, "Fecha requerida", class: "kz-label" %><%= f.date_field :required_on, class: "kz-input" %></div>
+      <div class="kz-field"><%= f.label :budget_cop, "Presupuesto (COP)", class: "kz-label" %><%= f.number_field :budget_cop, class: "kz-input", min: 1, step: 1000 %></div>
+    </div>
+
+    <div class="kz-field">
+      <%= f.label :description, "Descripción", class: "kz-label" %>
+      <%= f.text_area :description, class: "kz-textarea", placeholder: "Referencias, usos, detalles que dio el cliente" %>
+    </div>
+
+    <div class="flex flex-wrap justify-end gap-2">
+      <%= link_to "Cancelar", operator_requirements_path, class: "kz-btn kz-btn--ghost" %>
+      <button class="kz-btn kz-btn--primary">Registrar requerimiento</button>
+    </div>
+  <% end %>
+</div>

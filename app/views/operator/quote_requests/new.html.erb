@@ -1,0 +1,46 @@
+<% content_for :title, "Pedir cotizaciones · KOVZU" %>
+<% order = @sub_order.order %>
+<% slots = SubOrder::MAX_QUOTES - @sub_order.open_quotes.count %>
+
+<div class="mx-auto max-w-4xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "operator/shared/page_header", back: [ "Pedido #{order.code}", operator_order_path(order) ],
+        overline: "Pedir cotizaciones · #{@sub_order.category.name}", title: @sub_order.title %>
+
+  <p class="text-ink-muted max-w-2xl">Elige hasta <%= slots %> taller<%= "es" unless slots == 1 %>. Cada uno recibe un enlace que vence en 5 días, con la ficha v<%= format("%02d", @tech_sheet.version) %> y sin los datos de contacto del cliente. Solo aparecen talleres verificados con capacidad en <%= @sub_order.category.name %><%= " para #{number_with_delimiter(@sub_order.quantity, delimiter: ".")} unidades" if @sub_order.quantity %>, ordenados por nivel y puntaje.</p>
+
+  <%= form_with url: operator_sub_order_quote_request_path(@sub_order), class: "kz-card", data: { controller: "checklist-limit", checklist_limit_max_value: slots } do %>
+    <% if @candidates.empty? %>
+      <p class="kz-empty">Ningún taller verificado cumple estas condiciones.<%= " Hay #{@not_verified} en proceso de verificación." if @not_verified.positive? %></p>
+    <% else %>
+      <ul class="divide-y divide-line">
+        <% @candidates.each do |workshop| %>
+          <% capability = workshop.capabilities.find { |cap| cap.category_id == @sub_order.category_id } %>
+          <% requested = @requested_ids.include?(workshop.id) %>
+          <li class="px-6 py-4">
+            <label class="kz-check">
+              <%= check_box_tag "workshop_ids[]", workshop.id, false, id: "workshop_#{workshop.id}", disabled: requested, data: { checklist_limit_target: "option" } %>
+              <span class="grid gap-1 flex-1 min-w-0">
+                <span class="flex flex-wrap items-center gap-2">
+                  <span class="font-medium"><%= workshop.name %></span>
+                  <span class="kz-status kz-status--success"><%= workshop.level_label %></span>
+                  <% if requested %><span class="kz-status">Ya cotizando</span><% end %>
+                </span>
+                <span class="text-xs text-ink-muted">
+                  Puntaje <%= workshop.score || "sin datos" %> · <%= capability.volume_label %><%= " · #{capability.processes}" if capability.processes.present? %><%= " · #{workshop.neighborhood}" if workshop.neighborhood.present? %>
+                </span>
+              </span>
+            </label>
+          </li>
+        <% end %>
+      </ul>
+      <div class="kz-card__footer flex flex-wrap items-center justify-between gap-3">
+        <span class="text-sm text-ink-muted" data-checklist-limit-target="status">Ninguno elegido</span>
+        <button class="kz-btn kz-btn--primary">Enviar solicitud</button>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if @not_verified.positive? && @candidates.any? %>
+    <p class="text-sm text-ink-muted"><%= pluralize(@not_verified, "taller", plural: "talleres") %> con esta capacidad no aparece<%= "n" unless @not_verified == 1 %> porque aún no están verificados. <%= link_to "Ver talleres", operator_workshops_path(category_id: @sub_order.category_id), class: "kz-link" %></p>
+  <% end %>
+</div>
