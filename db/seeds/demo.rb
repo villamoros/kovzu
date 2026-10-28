@@ -2,6 +2,10 @@
 # Solo se cargan si no hay pedidos todavía.
 return if Order.exists?
 
+# Sin correos al sembrar, y los trabajos (como el acta en PDF) en línea.
+ActionMailer::Base.perform_deliveries = false
+ActiveJob::Base.queue_adapter = :inline
+
 today = Date.current
 cats = Category.all.index_by(&:slug)
 operator = "Juan Villamoros"
@@ -104,3 +108,67 @@ stand.register_sample!(kind: "fisica", notes: "Logo centrado y segunda mano de l
 uniforms = running_order!(clients[:ferre], cats["confeccion"], workshops[:alameda], "Dotación bordada", 60, "inspeccion", today - 14, operator,
                           { "material" => "Dril 100 % algodón", "tallas" => "S: 15, M: 25, L: 15, XL: 5", "marcacion" => "Logo bordado en pecho izquierdo, 8 cm" })
 uniforms.milestones.where(kind: %w[anticipo muestra produccion]).find_each { |m| m.complete!(on: m.committed_on) }
+
+# Paso 4: pagos, inspecciones, actas y comisiones
+inspector = User.find_or_create_by!(clerk_id: "seed_inspector") { |user| user.assign_attributes(first_name: "Pedro", last_name: "Inspector", email: "inspeccion@kovzu.co", role: "inspector") }
+workshops[:carton].update!(payment_details: "Bancolombia ahorros 123-456789-00 · Cartón Valle SAS · NIT 900111222-1")
+workshops[:maderas].update!(payment_details: "Davivienda corriente 0550-1234-5678 · Maderas del Sur")
+workshops[:lito].update!(payment_details: "Banco de Bogotá ahorros 987-65432-1 · Litografía Pance SAS", commission_percent: 9)
+
+support = -> { seed_file.("cotizacion-whatsapp.png", "image/png") }
+pay_advance = lambda do |sub, paid_on|
+  sub.update_columns(status: "anticipo_pendiente")
+  sub.register_payment!(kind: "anticipo", amount_cop: sub.expected_payment_cop(:anticipo), paid_on:, support: support.(), by: operator)
+  sub
+end
+{ secondary => "en_produccion", stand => "muestra_pendiente", uniforms => "inspeccion" }.each do |sub, status|
+  pay_advance.(sub, sub.milestones.find_by(kind: "anticipo").committed_on.then { |date| [ date, today ].min })
+  sub.update_columns(status:)
+end
+
+# Lote inspeccionado y aprobado, con el saldo pagado y entregado. Deja comisión.
+def inspected!(sub, inspector, operator, nonconforming: nil, photo: nil)
+  sub.update_columns(status: "inspeccion")
+  inspection = Inspection.start_for!(sub, by: inspector.name)
+  inspection.items.each do |item|
+    if item.key == nonconforming
+      item.update!(result: "no_conforme", severity: "menor", measurement: "+1,5 mm", note: "Alto interno 1,5 mm por encima de la tolerancia")
+      item.photos.attach(photo)
+    else
+      item.update!(result: "conforme")
+    end
+  end
+  inspection.update!(notes: "Revisión en planta del taller.")
+  inspection.close!(result: nonconforming ? "aprobado_con_desviacion" : "aprobado", user: inspector)
+end
+
+def delivered!(sub, inspector, operator, paid_on, support)
+  inspected!(sub, inspector, operator)
+  sub.reload.register_payment!(kind: "saldo", amount_cop: sub.expected_payment_cop(:saldo), paid_on:, support:, by: operator)
+  sub.reload.deliver!(by: operator)
+  sub
+end
+
+displays = running_order!(clients[:eventos], cats["corte"], workshops[:maderas], "Letreros en MDF cortados en CNC", 40, "en_produccion", today - 60, operator,
+                          { "material" => "MDF 9 mm", "dimensiones" => "400 × 300 mm", "proceso" => "Router CNC" })
+displays.update_columns(amount_cop: 2_400_000)
+pay_advance.(displays, today - 58)
+displays.update_columns(status: "en_produccion")
+delivered!(displays, inspector, operator, today - 40, support.())
+
+seasonal = running_order!(clients[:eventos], cats["impresion"], workshops[:lito], "Etiquetas de temporada", 3_000, "en_produccion", today - 20, operator,
+                          { "material" => "Adhesivo propalcote", "dimensiones" => "60 × 40 mm", "tintas" => "CMYK" })
+pay_advance.(seasonal, today - 18)
+seasonal.update_columns(status: "en_produccion")
+delivered!(seasonal, inspector, operator, today - 2, support.())
+
+# Corte del mes del letrero: facturado y vencido hace más de 15 días → Maderas del Sur en mora (RN-09)
+cut = CommissionCut.run!(month: (today - 40).beginning_of_month, by: operator)
+cut.invoice!(workshops[:maderas], number: "KZ-FE-0007", invoiced_on: today - 25, due_on: today - 20, by: operator)
+
+# Lote con una desviación menor esperando la decisión del cliente (HU-13)
+bags = running_order!(clients[:aroma], cats["empaques"], workshops[:carton], "Bolsas kraft con manija", 800, "en_produccion", today - 15, operator,
+                      { "material" => "Kraft 120 g", "dimensiones" => "260 × 120 × 320 mm", "impresion" => "1 tinta" })
+pay_advance.(bags, today - 14)
+bags.milestones.where(kind: %w[anticipo muestra produccion]).find_each { |m| m.complete!(on: [ m.committed_on, today ].min) }
+inspected!(bags, inspector, operator, nonconforming: "medidas", photo: seed_file.("muestra-exhibidor.png", "image/png"))

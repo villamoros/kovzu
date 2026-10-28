@@ -104,6 +104,12 @@ class ClientPortalTest < ActionDispatch::IntegrationTest
     assert_select ".kz-timeline__item", 5
 
     sign_in_as @operator
+    get operator_order_path(order)
+    assert_select "a[href=?]", new_operator_sub_order_payment_path(sub_order, tipo: "anticipo")
+    post operator_sub_order_payments_path(sub_order), params: { payment: { kind: "anticipo", amount_cop: "450.000", paid_on: Date.current,
+                                                                            support: fixture_file_upload("soporte.pdf", "application/pdf") } }
+    assert_redirected_to operator_order_path(order)
+    assert sub_order.reload.muestra_pendiente?
     post operator_sub_order_samples_path(sub_order), params: { sample: { kind: "fisica", photos: [ fixture_file_upload("muestra.png", "image/png") ] } }
     assert_redirected_to operator_order_path(order)
     sample = sub_order.samples.sole

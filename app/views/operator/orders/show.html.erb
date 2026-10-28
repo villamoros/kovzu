@@ -70,6 +70,10 @@
       <% if sub_order.samples.any? || sub_order.can_register_sample? %>
         <%= render "operator/orders/samples", sub_order: %>
       <% end %>
+
+      <% if sub_order.workshop && !sub_order.status.in?(%w[preparacion cotizando asignado]) %>
+        <%= render "operator/orders/production", sub_order: %>
+      <% end %>
     </section>
   <% end %>
 

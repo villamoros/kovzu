@@ -31,6 +31,18 @@
         <%= f.number_field :score, class: "kz-input", min: 0, max: 5, step: 0.1 %>
       </div>
     </div>
+    <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-4 items-start">
+      <div class="kz-field">
+        <%= f.label :commission_percent, "Comisión del convenio (%)", class: "kz-label" %>
+        <%= f.number_field :commission_percent, class: "kz-input", min: 8, max: 12, step: 0.5, required: true %>
+        <p class="kz-hint">Sobre el valor del taller antes de IVA, al pagarse el saldo.</p>
+      </div>
+      <div class="kz-field">
+        <%= f.label :payment_details, class: "kz-label" do %>Datos de pago <small>(opcional)</small><% end %>
+        <%= f.text_area :payment_details, class: "kz-textarea", rows: 2, placeholder: "Bancolombia ahorros 123-456789-00 · a nombre de Cartón Valle SAS" %>
+        <p class="kz-hint">El cliente los recibe cuando se habilita el saldo.</p>
+      </div>
+    </div>
   </section>
 
   <section class="kz-card kz-card__body grid grid-cols-1 gap-4">

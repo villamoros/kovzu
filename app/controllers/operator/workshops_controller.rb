@@ -78,7 +78,7 @@ module Operator
 
     def workshop_params
       params.expect(workshop: [ :name, :nit, :has_rut, :e_invoicing, :contact_name, :phone, :whatsapp, :email, :address,
-                                :neighborhood, :machines, :notes, :level, :score,
+                                :neighborhood, :machines, :notes, :level, :score, :commission_percent, :payment_details,
                                 { visit_checklist: Workshop::VISIT_ITEMS.keys,
                                   capabilities_attributes: [ [ :id, :category_id, :processes, :materials, :min_volume, :max_volume, :tolerances, :_destroy ] ] } ])
     end

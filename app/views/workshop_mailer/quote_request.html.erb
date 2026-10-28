@@ -1,0 +1,5 @@
+<h1 style="font-size:20px;margin:0 0 12px;">Hola, <%= @quote.workshop.contact_name.presence || @quote.workshop.name %></h1>
+<p>KOVZU te invita a cotizar <strong><%= @sub_order.title %></strong><% if @sub_order.quantity %> · <%= number_with_delimiter(@sub_order.quantity) %> unidades<% end %> (<%= @sub_order.category.name %>).</p>
+<p>Abre el enlace en tu celular: ves la ficha técnica y los archivos, y respondes con precio, plazo y vigencia. No necesitas crear cuenta.</p>
+<p style="color:#4A5A6A;font-size:13px;">El enlace vence el <%= l(@quote.link_expires_at.to_date, format: :long) %>.</p>
+<a href="<%= @url %>" style="display:inline-block;margin-top:16px;padding:12px 20px;background:#C8F03C;color:#0B1F33;border-radius:999px;text-decoration:none;font-weight:600;">Cotizar</a>

@@ -10,7 +10,7 @@ class OperatorDashboard
 
   def orders
     @orders ||= begin
-      scope = Order.open.includes(:client_company, proposals: :quote, sub_orders: [ :workshop, :category, :milestones, :samples ])
+      scope = Order.open.includes(:client_company, proposals: :quote, sub_orders: [ :workshop, :category, :milestones, :samples, :inspections, :payments, :quotes ])
       scope = scope.where(id: SubOrder.where(workshop_id: filters[:workshop_id]).select(:order_id)) if filters[:workshop_id]
       scope = scope.where(id: SubOrder.where(category_id: filters[:category_id]).select(:order_id)) if filters[:category_id]
       scope = scope.where(client_company_id: filters[:client_company_id]) if filters[:client_company_id]
@@ -35,6 +35,9 @@ class OperatorDashboard
 
   def quotes_waiting = Quote.solicitada.includes(:workshop, sub_order: :order).order(:created_at)
 
+  # RN-09 / HU-20: talleres con comisiones facturadas y más de 15 días de mora.
+  def delinquent_workshops = Workshop.delinquent.order(:name)
+
   def filtered? = filters.any?
 
   private
@@ -46,6 +49,10 @@ class OperatorDashboard
       end
       if sub_order.inspeccion?
         items << Attention.new(order:, reason: "Inspección pendiente", tone: :warning, due_on: milestone_date(sub_order, "inspeccion"))
+      end
+      items.concat(quality_attention(order, sub_order))
+      if sub_order.quotes.any? { |quote| quote.solicitada? && quote.renewal_requested_at }
+        items << Attention.new(order:, reason: "Un taller pidió un enlace nuevo para cotizar", tone: :warning, due_on: nil)
       end
       if sub_order.rejection_count >= Sample::REJECTIONS_ALERT
         items << Attention.new(order:, reason: "#{sub_order.rejection_count} muestras rechazadas: revisar ficha o taller", tone: :danger, due_on: nil)
@@ -70,6 +77,20 @@ class OperatorDashboard
       [ Attention.new(order:, reason: "El cliente pidió cambios a la propuesta", tone: :warning, due_on: proposal.decided_at&.to_date) ]
     elsif proposal.enviada? && proposal.quote_expired?
       [ Attention.new(order:, reason: "Venció la cotización de la propuesta", tone: :danger, due_on: proposal.quote.valid_until) ]
+    else
+      []
+    end
+  end
+
+  # HU-13 / HU-19: desviación sin respuesta, segundo rechazo (RN-06) y saldo habilitado sin registrar.
+  def quality_attention(order, sub_order)
+    inspection = sub_order.inspections.last
+    if sub_order.escalado?
+      [ Attention.new(order:, reason: "Segundo rechazo del lote: decidir reasignar, descontar o cancelar", tone: :danger, due_on: inspection&.closed_at&.to_date) ]
+    elsif sub_order.aprobado_con_desviacion?
+      [ Attention.new(order:, reason: "Desviación esperando la decisión del cliente", tone: :warning, due_on: inspection&.closed_at&.to_date) ]
+    elsif sub_order.aprobado? && sub_order.payments.none? { |payment| payment.vigente? && payment.kind == "saldo" }
+      [ Attention.new(order:, reason: "Saldo habilitado sin registrar", tone: :warning, due_on: inspection&.closed_at&.to_date) ]
     else
       []
     end

@@ -7,6 +7,14 @@ Rails.application.routes.draw do
 
   get "dashboard", to: "dashboard#show", as: :dashboard
 
+  # HU-05: el taller cotiza desde un enlace, sin cuenta.
+  resources :workshop_quotes, path: "cotizar", param: :token, only: %i[show update] do
+    member do
+      post :decline, path: "no-cotizo"
+      post :renewal, path: "renovar"
+    end
+  end
+
   # Portal del cliente (paso 3).
   scope module: :portal do
     resource :company, path: "empresa", only: %i[new create]
@@ -17,6 +25,12 @@ Rails.application.routes.draw do
       resource :proposal, path: "propuesta", only: :show do
         post :accept, path: "aceptar"
         post :request_changes, path: "cambios"
+      end
+      resources :inspections, path: "actas", only: :show do
+        member do
+          post :accept_deviation, path: "aceptar-desviacion"
+          post :reject_deviation, path: "rechazar-desviacion"
+        end
       end
     end
     resources :samples, path: "muestras", only: [] do
@@ -45,7 +59,10 @@ Rails.application.routes.draw do
       resources :proposals, path: "propuestas", only: %i[new create]
     end
     resources :quotes, path: "cotizaciones", only: %i[edit update] do
-      post :decline, on: :member, path: "no-cotiza"
+      member do
+        post :decline, path: "no-cotiza"
+        post :renew, path: "renovar-enlace"
+      end
     end
     resources :tech_sheets, path: "fichas", only: %i[edit update] do
       post :ready, on: :member, path: "lista"
@@ -53,6 +70,28 @@ Rails.application.routes.draw do
     resources :sub_orders, path: "subpedidos", only: [] do
       resource :quote_request, path: "cotizar", only: %i[new create]
       resources :samples, path: "muestras", only: %i[new create]
+      resources :payments, path: "pagos", only: %i[new create]
+      resources :inspections, path: "inspecciones", only: :create
+      member do
+        post :finish_production, path: "produccion-terminada"
+        post :deliver, path: "entregado"
+      end
+    end
+    resources :inspections, path: "inspecciones", only: :show do
+      member do
+        post :progress, path: "avance"
+        post :close, path: "cerrar"
+      end
+    end
+    resources :payments, path: "pagos", only: [] do
+      post :void, on: :member, path: "anular"
+    end
+    resources :commissions, path: "comisiones", only: :index
+    resources :commission_cuts, path: "comisiones/cortes", only: %i[show create] do
+      member do
+        post :invoice, path: "factura"
+        post :pay, path: "pago"
+      end
     end
 
     resources :workshops, path: "talleres", except: :destroy do

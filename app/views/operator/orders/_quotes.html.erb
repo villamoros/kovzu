@@ -19,6 +19,23 @@
               <%= link_to quote.workshop.name, operator_workshop_path(quote.workshop), class: "kz-link font-medium" %>
               <% if quote.conditions.present? %><div class="text-xs text-ink-muted max-w-56"><%= quote.conditions %></div><% end %>
               <% if quote.rechazada? %><div class="text-xs text-ink-muted"><%= quote.decline_reason %></div><% end %>
+              <% if quote.solicitada? %>
+                <% link = workshop_quote_url(quote.token) %>
+                <div class="flex flex-wrap items-center gap-x-2 text-xs text-ink-muted" data-controller="clipboard" data-clipboard-text-value="<%= link %>">
+                  <% if quote.link_usable? %>
+                    <span>Enlace hasta el <%= kz_date(quote.link_expires_at.to_date) %></span>
+                    <button type="button" class="kz-link" data-action="clipboard#copy">Copiar</button>
+                    <% if (phone = quote.workshop.whatsapp.to_s.gsub(/\D/, "")).present? %>
+                      <%= link_to "WhatsApp", "https://wa.me/#{phone}?text=#{ERB::Util.url_encode("Hola, KOVZU te invita a cotizar #{sub_order.title}: #{link}")}", class: "kz-link", target: "_blank", rel: "noopener" %>
+                    <% end %>
+                  <% else %>
+                    <span class="<%= "text-warning" if quote.renewal_requested_at %>"><%= quote.renewal_requested_at ? "El taller pidió un enlace nuevo" : "Enlace vencido" %></span>
+                    <%= button_to "Renovar enlace", renew_operator_quote_path(quote), class: "kz-link", form_class: "inline" %>
+                  <% end %>
+                </div>
+              <% elsif quote.approvals.any? %>
+                <div class="text-xs text-ink-muted">Cotizó por enlace · aceptó la ficha v<%= quote.tech_sheet.version %></div>
+              <% end %>
               <% if quote.entered_by_operator? && quote.support.attached? %><div class="text-xs"><%= link_to "Soporte", rails_blob_path(quote.support, disposition: "inline"), class: "kz-link", target: "_blank", rel: "noopener" %> · cargada por el operador</div><% end %>
             </td>
             <td class="is-meta"><%= quote.workshop.level_label || "—" %></td>

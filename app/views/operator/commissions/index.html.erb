@@ -1,0 +1,112 @@
+<% content_for :title, "Comisiones · KOVZU" %>
+<% totals = @portfolio.totals %>
+<% uncut = @portfolio.uncut.to_a %>
+
+<div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-8">
+  <%= render "kz/page_header", overline: "Pagos y comisiones", title: "Cartera de comisiones" %>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <%= render "kz/stat", label: "Causado", value: kz_money(totals[:causada]), tone: :info, meta: "#{uncut.size} sin corte" %>
+    <%= render "kz/stat", label: "Facturado", value: kz_money(totals[:facturada]), tone: :warning, meta: "Por cobrar" %>
+    <%= render "kz/stat", label: "En mora", value: kz_money(totals[:en_mora]), tone: totals[:en_mora].positive? ? :danger : :neutral,
+          meta: "Más de #{Commission::DELINQUENT_DAYS} días vencida" %>
+    <%= render "kz/stat", label: "Pagado", value: kz_money(totals[:pagada]), tone: :success %>
+  </div>
+
+  <% if (late = @portfolio.delinquent_rows).any? %>
+    <div class="kz-alert kz-alert--danger" role="alert">
+      <%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %>
+      <div>
+        <p class="kz-alert__title"><%= late.map { |row| row.workshop.name }.to_sentence %> en mora</p>
+        <p class="kz-alert__body">Una mora de más de <%= Commission::DELINQUENT_DAYS %> días pausa sus asignaciones: no reciben solicitudes de cotización hasta que paguen (RN-09).</p>
+      </div>
+    </div>
+  <% end %>
+
+  <section class="kz-card">
+    <div class="kz-card__header">
+      <h2 class="kz-card__title">Por taller</h2>
+      <span class="kz-count"><%= @portfolio.rows.size %></span>
+    </div>
+    <% if @portfolio.rows.empty? %>
+      <p class="kz-empty">Aún no hay comisiones. Se causan cuando se registra el saldo de un lote aprobado.</p>
+    <% else %>
+      <div class="kz-table-wrap">
+        <table class="kz-table">
+          <thead>
+            <tr><th>Taller</th><% CommissionPortfolio::BUCKETS.each_value do |label| %><th class="is-num"><%= label %></th><% end %><th class="is-num">Total</th></tr>
+          </thead>
+          <tbody>
+            <% @portfolio.rows.each do |row| %>
+              <tr>
+                <td>
+                  <span class="flex flex-wrap items-center gap-2">
+                    <%= link_to row.workshop.name, operator_workshop_path(row.workshop), class: "kz-link font-medium" %>
+                    <% if row.delinquent? %><span class="kz-status kz-status--danger">En mora · <%= row.max_days_overdue %> días</span><% end %>
+                  </span>
+                  <span class="text-xs text-ink-muted"><%= kz_percent(row.workshop.commission_percent) %> · <%= row.commissions.size %> comisión<%= "es" unless row.commissions.size == 1 %></span>
+                </td>
+                <% CommissionPortfolio::BUCKETS.each_key do |bucket| %>
+                  <td class="is-num <%= "text-danger font-medium" if bucket == :en_mora && row.amounts[bucket].positive? %>"><%= row.amounts[bucket].positive? ? kz_money(row.amounts[bucket]) : "—" %></td>
+                <% end %>
+                <td class="is-num font-medium"><%= kz_money(row.total) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+          <tfoot>
+            <tr class="font-medium">
+              <td>Total</td>
+              <% CommissionPortfolio::BUCKETS.each_key do |bucket| %><td class="is-num"><%= kz_money(totals[bucket]) %></td><% end %>
+              <td class="is-num"><%= kz_money(totals.values.sum) %></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    <% end %>
+  </section>
+
+  <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-8 items-start">
+    <section class="kz-card">
+      <div class="kz-card__header"><h2 class="kz-card__title">Corte mensual</h2></div>
+      <%= form_with url: operator_commission_cuts_path, class: "kz-card__body grid gap-4" do %>
+        <p class="text-sm text-ink-muted">Agrupa por taller las comisiones causadas hasta el fin del mes, para facturar y enviar.</p>
+        <div class="kz-field">
+          <label class="kz-label" for="month">Mes</label>
+          <%= month_field_tag :month, Date.current.prev_month.strftime("%Y-%m"), max: Date.current.strftime("%Y-%m"), class: "kz-input", required: true %>
+        </div>
+        <button class="kz-btn kz-btn--primary" <%= "disabled" if uncut.empty? %>>Ejecutar corte</button>
+        <% if uncut.empty? %><p class="kz-hint">No hay comisiones causadas pendientes de corte.</p><% end %>
+      <% end %>
+    </section>
+
+    <section class="kz-card">
+      <div class="kz-card__header"><h2 class="kz-card__title">Cortes</h2></div>
+      <% cuts = @portfolio.cuts.to_a %>
+      <% if cuts.empty? %>
+        <p class="kz-empty">Todavía no hay cortes.</p>
+      <% else %>
+        <div class="kz-table-wrap">
+          <table class="kz-table">
+            <thead><tr><th>Mes</th><th class="is-num">Talleres</th><th class="is-num">Comisión</th><th>Estado</th></tr></thead>
+            <tbody>
+              <% cuts.each do |cut| %>
+                <% active = cut.commissions.reject(&:anulada?) %>
+                <tr>
+                  <td><%= link_to cut.name, operator_commission_cut_path(cut), class: "kz-link font-medium" %></td>
+                  <td class="is-num"><%= active.map(&:workshop_id).uniq.size %></td>
+                  <td class="is-num"><%= kz_money(active.sum(&:amount_cop)) %></td>
+                  <td>
+                    <% if active.all?(&:pagada?) %><span class="kz-status kz-status--success">Cobrado</span>
+                    <% elsif active.any?(&:delinquent?) %><span class="kz-status kz-status--danger">Con mora</span>
+                    <% elsif active.any?(&:causada?) %><span class="kz-status kz-status--info">Por facturar</span>
+                    <% else %><span class="kz-status kz-status--warning">Por cobrar</span><% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+    </section>
+  </div>
+</div>

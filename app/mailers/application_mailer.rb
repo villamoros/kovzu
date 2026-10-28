@@ -1,4 +1,4 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: ENV.fetch("MAIL_FROM", "KOVZU <notificaciones@example.com>")
+  default from: ENV.fetch("MAIL_FROM", "KOVZU <onboarding@resend.dev>")
   layout "mailer"
 end

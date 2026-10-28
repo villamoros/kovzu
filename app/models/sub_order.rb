@@ -14,6 +14,9 @@ class SubOrder < ApplicationRecord
   has_many :quotes, -> { order(:created_at) }, dependent: :destroy
   has_many :milestones, -> { order(:position) }, dependent: :destroy
   has_many :samples, -> { order(:number) }, dependent: :destroy
+  has_many :inspections, -> { order(:number) }, dependent: :restrict_with_error
+  has_many :payments, -> { order(:created_at) }, dependent: :restrict_with_error
+  has_many :commissions, dependent: :restrict_with_error
 
   validates :title, presence: true
   validates :quantity, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
@@ -43,10 +46,11 @@ class SubOrder < ApplicationRecord
       order.update!(status: "cotizando") if order.en_preparacion?
       AuditEvent.record!(self, "cotizacion.solicitada", actor: by, data: { workshops: workshops.map(&:name) })
       created
-    end
+    end.each { |quote| WorkshopMailer.with(quote:).quote_request.deliver_later if quote.workshop.email.present? }
   end
 
-  SAMPLE_STATUSES = %w[asignado anticipo_pendiente muestra_pendiente].freeze
+  # HU-19: la muestra se registra después del anticipo.
+  SAMPLE_STATUSES = %w[muestra_pendiente].freeze
 
   def current_sample = samples.last
 
@@ -67,6 +71,98 @@ class SubOrder < ApplicationRecord
     ClientMailer.with(order:, headline: "Tu muestra está lista para revisar",
                       body: "Registramos la muestra #{sample.number} de #{title}. Revísala y apruébala o pide ajustes.").order_update.deliver_later
     sample
+  end
+
+  # Producción terminada (o reproceso terminado): el lote queda listo para inspección (CU-07).
+  def finish_production!(by:)
+    raise TransitionError, "Solo se marca terminado un subpedido en producción o en reproceso." unless en_produccion? || reproceso?
+
+    rework = reproceso?
+    transaction do
+      update!(status: "inspeccion")
+      milestones.find_by(kind: "produccion")&.then { |milestone| milestone.complete! unless milestone.done? }
+      AuditEvent.record!(self, rework ? "produccion.reproceso_terminado" : "produccion.terminada", actor: by)
+    end
+    ClientMailer.with(order:, headline: "#{title}: listo para inspección",
+                      body: "El taller terminó #{rework ? 'el reproceso' : 'la producción'}. Vamos a inspeccionar el lote antes del despacho.").order_update.deliver_later
+  end
+
+  def current_inspection = inspections.last
+
+  def accepted_proposal
+    order.proposals.select(&:aceptada?).find { |proposal| proposal.quote.sub_order_id == id }
+  end
+
+  # Valor pactado de cada pago: el de la propuesta aceptada o, sin propuesta, la mitad del valor del taller.
+  def expected_payment_cop(kind)
+    proposal = accepted_proposal
+    advance = proposal ? proposal.advance_cop.to_i : (amount_cop.to_i / 2.0).round
+    total = proposal ? proposal.workshop_price_cop.to_i : amount_cop.to_i
+    kind.to_s == "anticipo" ? advance : total - advance
+  end
+
+  def payment(kind) = payments.find { |payment| payment.vigente? && payment.kind == kind.to_s }
+
+  def can_register_advance? = anticipo_pendiente? && payment(:anticipo).nil?
+
+  # RF-29: el saldo se habilita solo con el acta aprobada (o la desviación aceptada).
+  def balance_enabled? = aprobado? && payment(:saldo).nil?
+
+  def balance_paid? = payment(:saldo).present?
+
+  # HU-19: registra el pago con su soporte. Si el valor no coincide con lo pactado, pide confirmar.
+  def register_payment!(kind:, amount_cop:, paid_on:, support:, by:, notes: nil, confirm_mismatch: false)
+    kind = kind.to_s
+    raise TransitionError, "Tipo de pago no válido." unless Payment::KINDS.key?(kind)
+    raise TransitionError, "Ya hay un #{Payment::KINDS[kind].downcase} registrado. Anúlalo para registrar otro." if payment(kind)
+    if kind == "anticipo"
+      raise TransitionError, "El anticipo se registra con el pedido confirmado y antes de la muestra." unless anticipo_pendiente?
+    else
+      raise TransitionError, "El saldo se habilita cuando el acta de inspección queda aprobada." unless aprobado?
+    end
+
+    record = Payment.new(sub_order: self, kind:, amount_cop:, paid_on:, support:, notes:, registered_by: by, expected_cop: expected_payment_cop(kind))
+    record.validate!
+    if record.mismatch? && !ActiveModel::Type::Boolean.new.cast(confirm_mismatch)
+      expected = ActiveSupport::NumberHelper.number_to_currency(record.expected_cop, locale: :es)
+      raise Payment::AmountMismatch, "El valor no coincide con lo pactado (#{expected}). Revísalo y confirma si es correcto."
+    end
+
+    transaction do
+      record.save!
+      if kind == "anticipo"
+        update!(status: "muestra_pendiente")
+        milestones.find_by(kind: "anticipo")&.complete!(on: record.paid_on)
+      else
+        Commission.accrue!(record)
+      end
+      AuditEvent.record!(self, "pago.registrado", actor: by,
+                         data: { kind:, amount_cop: record.amount_cop, difference_cop: record.mismatch? ? record.difference_cop : nil }.compact)
+    end
+    payments.reset
+    record
+  end
+
+  # Al anular un pago, el subpedido vuelve al paso anterior si nada avanzó desde entonces.
+  def reopen_after_void!(payment)
+    return unless payment.kind == "anticipo" && muestra_pendiente? && samples.none?
+
+    update!(status: "anticipo_pendiente")
+    milestones.find_by(kind: "anticipo")&.update!(completed_on: nil)
+  end
+
+  # Con el saldo pagado se despacha y se entrega. El pedido se cierra cuando todos sus subpedidos se entregan.
+  def deliver!(by:)
+    raise TransitionError, "El despacho se habilita con el acta aprobada y el saldo pagado." unless aprobado? && balance_paid?
+
+    transaction do
+      update!(status: "entregado")
+      milestones.find_by(kind: "despacho")&.complete!
+      AuditEvent.record!(self, "subpedido.entregado", actor: by)
+      order.update!(status: "entregado", delivered_at: Time.current) if order.sub_orders.reload.all?(&:entregado?)
+    end
+    ClientMailer.with(order:, headline: "#{title} entregado",
+                      body: "Registramos la entrega. Si encuentras algo fuera de la ficha, tienes 10 días calendario para reclamar.").order_update.deliver_later
   end
 
   # Hitos estándar desde una fecha de inicio, en días hábiles.

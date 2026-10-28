@@ -4,7 +4,7 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
-  helper_method :current_user, :signed_in?, :nav_items, :nav_home_path
+  helper_method :current_user, :signed_in?, :nav_items, :nav_home_path, :public_page?
 
   private
 
@@ -29,6 +29,9 @@ class ApplicationController < ActionController::Base
   end
 
   def nav_home_path = signed_in? ? dashboard_path : root_path
+
+  # Páginas abiertas por enlace (el taller cotizando): sin botones de cuenta en la barra.
+  def public_page? = false
 
   def require_authentication!
     redirect_to sign_in_path(redirect_url: request.original_url) unless signed_in?

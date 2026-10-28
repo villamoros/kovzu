@@ -18,6 +18,7 @@ class Workshop < ApplicationRecord
   has_many :quotes, dependent: :restrict_with_error
   has_many :sub_orders, dependent: :restrict_with_error
   has_many :audit_events, as: :subject, dependent: :destroy
+  has_many :commissions, dependent: :restrict_with_error
 
   accepts_nested_attributes_for :capabilities, allow_destroy: true, reject_if: ->(attrs) { attrs["category_id"].blank? }
 
@@ -25,11 +26,14 @@ class Workshop < ApplicationRecord
   validates :level, inclusion: { in: LEVELS.keys }, allow_nil: true
   validates :nit, uniqueness: true, allow_blank: true
   validates :score, numericality: { in: 0..5 }, allow_nil: true
+  validates :commission_percent, numericality: { in: 8..12, message: "debe estar entre 8 % y 12 % (convenio)" }
   validate :verified_requires_rut_and_invoicing
 
   normalizes :nit, with: ->(nit) { nit.strip.presence }
 
-  scope :eligible_for_quotes, -> { verificado }
+  # RN-09: una mora de más de 15 días en comisiones pausa las asignaciones.
+  scope :delinquent, -> { where(id: Commission.delinquent.select(:workshop_id)) }
+  scope :eligible_for_quotes, -> { verificado.where.not(id: Commission.delinquent.select(:workshop_id)) }
   scope :ranked, lambda {
     order(Arel.sql("CASE workshops.level WHEN 'preferente' THEN 0 WHEN 'confiable' THEN 1 ELSE 2 END"),
           Arel.sql("workshops.score DESC NULLS LAST"), :name)
@@ -96,6 +100,8 @@ class Workshop < ApplicationRecord
 
     transition!("retirado", by:, status_reason: reason)
   end
+
+  def delinquent? = commissions.delinquent.exists?
 
   def level_label = LEVELS[level]
   def status_label = StatusCatalog.label(:workshop, status)

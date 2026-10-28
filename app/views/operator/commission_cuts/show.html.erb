@@ -1,0 +1,62 @@
+<% content_for :title, "Corte #{@cut.name} · KOVZU" %>
+<% groups = @cut.by_workshop %>
+
+<div class="mx-auto max-w-5xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", back: [ "Comisiones", operator_commissions_path ],
+        overline: "Corte del #{kz_date(@cut.period_start)} al #{kz_date(@cut.period_end)} · #{@cut.generated_by}", title: @cut.name,
+        actions: link_to("Descargar CSV", operator_commission_cut_path(@cut, format: :csv), class: "kz-btn kz-btn--outline") %>
+
+  <% groups.each do |workshop, commissions| %>
+    <% status = commissions.map(&:status).uniq %>
+    <section class="kz-card">
+      <div class="kz-card__header">
+        <div class="flex flex-wrap items-center gap-3">
+          <h2 class="kz-card__title"><%= workshop.name %></h2>
+          <% if commissions.any?(&:delinquent?) %>
+            <span class="kz-status kz-status--danger">En mora · <%= commissions.map(&:days_overdue).max %> días</span>
+          <% else %>
+            <%= kz_status status.first, kind: :commission if status.one? %>
+          <% end %>
+        </div>
+        <span class="text-sm text-ink-muted"><%= workshop.nit.presence || "Sin NIT" %> · <%= kz_money(commissions.sum(&:amount_cop)) %></span>
+      </div>
+      <div class="kz-table-wrap">
+        <table class="kz-table">
+          <thead><tr><th>Pedido</th><th>Subpedido</th><th>Saldo</th><th class="is-num">Base</th><th class="is-num">%</th><th class="is-num">Comisión</th><th>Factura</th></tr></thead>
+          <tbody>
+            <% commissions.each do |commission| %>
+              <tr>
+                <td><%= link_to commission.order.code, operator_order_path(commission.order), class: "kz-code kz-link" %></td>
+                <td><%= commission.sub_order.title %></td>
+                <td class="is-meta"><%= kz_date(commission.accrued_on) %></td>
+                <td class="is-num"><%= kz_money(commission.base_cop) %></td>
+                <td class="is-num"><%= kz_percent(commission.percent) %></td>
+                <td class="is-num font-medium"><%= kz_money(commission.amount_cop) %></td>
+                <td class="is-meta">
+                  <% if commission.invoice_number %>
+                    <%= commission.invoice_number %> · vence <%= kz_date(commission.due_on) %><% if commission.paid_on %> · pagada <%= kz_date(commission.paid_on) %><% end %>
+                  <% else %>—<% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <% if commissions.any?(&:causada?) %>
+        <%= form_with url: invoice_operator_commission_cut_path(@cut), class: "kz-card__footer grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-3 items-end" do %>
+          <%= hidden_field_tag :workshop_id, workshop.id, id: nil %>
+          <div class="kz-field"><label class="kz-label" for="invoice_number_<%= workshop.id %>">Número de factura</label><%= text_field_tag :invoice_number, nil, id: "invoice_number_#{workshop.id}", class: "kz-input", required: true, placeholder: "KZ-FE-0012" %></div>
+          <div class="kz-field"><label class="kz-label" for="invoiced_on_<%= workshop.id %>">Fecha</label><%= date_field_tag :invoiced_on, Date.current, id: "invoiced_on_#{workshop.id}", class: "kz-input" %></div>
+          <div class="kz-field"><label class="kz-label" for="due_on_<%= workshop.id %>">Vence</label><%= date_field_tag :due_on, Date.current, id: "due_on_#{workshop.id}", class: "kz-input" %></div>
+          <button class="kz-btn kz-btn--primary">Registrar factura</button>
+        <% end %>
+      <% elsif commissions.any?(&:facturada?) %>
+        <%= form_with url: pay_operator_commission_cut_path(@cut), class: "kz-card__footer flex flex-wrap gap-3 items-end justify-end" do %>
+          <%= hidden_field_tag :workshop_id, workshop.id, id: nil %>
+          <div class="kz-field"><label class="kz-label" for="paid_on_<%= workshop.id %>">Fecha de pago</label><%= date_field_tag :paid_on, Date.current, id: "paid_on_#{workshop.id}", max: Date.current, class: "kz-input" %></div>
+          <button class="kz-btn kz-btn--primary">Registrar pago</button>
+        <% end %>
+      <% end %>
+    </section>
+  <% end %>
+</div>

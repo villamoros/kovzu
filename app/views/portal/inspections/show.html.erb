@@ -1,0 +1,32 @@
+<% content_for :title, "Acta #{@inspection.number} · #{@order.code} · KOVZU" %>
+
+<div class="mx-auto max-w-4xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", back: [ "Pedido #{@order.code}", order_path(@order) ],
+        overline: "Acta de inspección #{@inspection.number}#{" · reinspección" if @inspection.reinspection?}",
+        title: @inspection.sub_order.title, status: kz_status(@inspection.result, kind: :inspection_result) %>
+
+  <% if @inspection.deviation_pending? %>
+    <section class="kz-card kz-card__body grid gap-4 bg-warning-soft/40">
+      <div class="grid gap-1">
+        <h2 class="kz-h3">¿Aceptas la desviación?</h2>
+        <p class="text-sm text-ink-muted">El lote tiene una no conformidad menor (detalle abajo). Si la aceptas, se habilita el saldo. Si no, el taller reprocesa a su costo y volvemos a inspeccionar.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+        <%= button_to "Aceptar la desviación", accept_deviation_order_inspection_path(@order, @inspection), class: "kz-btn kz-btn--primary w-full",
+              form: { data: { turbo_confirm: "¿Aceptas el lote con esta desviación? Queda registrado con tu nombre." } } %>
+        <details class="kz-card">
+          <summary class="px-4 py-3 cursor-pointer text-sm font-medium">No la acepto</summary>
+          <%= form_with url: reject_deviation_order_inspection_path(@order, @inspection), class: "px-4 pb-4 grid gap-3" do %>
+            <div class="kz-field">
+              <label class="kz-label" for="comment">Por qué</label>
+              <%= text_area_tag :comment, nil, class: "kz-textarea", required: true, placeholder: "El color fuera de tono se nota en el punto de venta." %>
+            </div>
+            <button class="kz-btn kz-btn--outline">Rechazar la desviación</button>
+          <% end %>
+        </details>
+      </div>
+    </section>
+  <% end %>
+
+  <%= render "shared/inspection_report", inspection: @inspection %>
+</div>

@@ -1,5 +1,5 @@
 module Operator
-  # HU-05: el operador carga la cotización que llegó por WhatsApp, o registra que el taller no cotiza.
+  # HU-05: el operador carga la cotización que llegó por WhatsApp, registra que el taller no cotiza o renueva el enlace.
   class QuotesController < BaseController
     before_action :set_quote
 
@@ -17,6 +17,11 @@ module Operator
     def decline
       @quote.decline!(params[:reason], by: actor_name)
       redirect_to operator_order_path(@quote.sub_order.order), notice: "Registramos que #{@quote.workshop.name} no cotiza."
+    end
+
+    def renew
+      @quote.renew_link!(by: actor_name)
+      redirect_to operator_order_path(@quote.sub_order.order), notice: "Enlace renovado para #{@quote.workshop.name}. Envíaselo de nuevo."
     end
 
     private

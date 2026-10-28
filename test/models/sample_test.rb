@@ -4,13 +4,23 @@ class SampleTest < ActiveSupport::TestCase
   include ActionMailer::TestHelper
 
   setup do
-    sub_order = quoted_sub_order
-    @client = client_user(sub_order.order.client_company)
-    send_proposal(sub_order).accept!(user: @client)
-    @sub_order = sub_order.reload
+    @sub_order = confirmed_sub_order
+    @client = client_user(@sub_order.order.client_company)
+  end
+
+  test "HU-19: la muestra se registra después del anticipo" do
+    assert_not @sub_order.can_register_sample?
+    assert_raises(SubOrder::TransitionError) do
+      @sub_order.register_sample!(kind: "fisica", notes: nil, photos: [ fixture_upload("muestra.png", "image/png") ], by: "Ana")
+    end
+
+    pay!(@sub_order, "anticipo")
+    assert @sub_order.reload.muestra_pendiente?
+    assert @sub_order.can_register_sample?
   end
 
   test "registrar la muestra exige fotos y avisa al cliente" do
+    pay!(@sub_order, "anticipo")
     assert_raises(ActiveRecord::RecordInvalid) { @sub_order.register_sample!(kind: "fisica", notes: nil, photos: [], by: "Ana") }
 
     sample = nil
@@ -67,6 +77,7 @@ class SampleTest < ActiveSupport::TestCase
   private
 
   def register_sample
+    pay!(@sub_order, "anticipo") if @sub_order.reload.anticipo_pendiente?
     @sub_order.register_sample!(kind: "fisica", notes: "Primera muestra", photos: [ fixture_upload("muestra.png", "image/png") ], by: "Ana")
   end
 end

@@ -1,0 +1,7 @@
+Hola, <%= @quote.workshop.contact_name.presence || @quote.workshop.name %>
+
+KOVZU te invita a cotizar <%= @sub_order.title %><% if @sub_order.quantity %> · <%= number_with_delimiter(@sub_order.quantity) %> unidades<% end %> (<%= @sub_order.category.name %>).
+Abre el enlace en tu celular: ves la ficha técnica y los archivos, y respondes con precio, plazo y vigencia. No necesitas crear cuenta.
+
+Cotizar: <%= @url %>
+El enlace vence el <%= l(@quote.link_expires_at.to_date, format: :long) %>.

@@ -1,0 +1,37 @@
+<%# locals: (order:, sub_order:) -%>
+<%# HU-13: lo que el cliente tiene que saber o decidir sobre la inspección y el saldo. -%>
+<% inspection = sub_order.current_inspection %>
+<% if inspection&.deviation_pending? %>
+  <div class="kz-card__body flex flex-wrap items-center justify-between gap-4 border-b border-line bg-warning-soft/40">
+    <div class="grid gap-1">
+      <h3 class="kz-h3">El lote tiene una desviación menor</h3>
+      <p class="text-sm text-ink-muted">Revisa el acta y dinos si la aceptas. El saldo se habilita con tu respuesta.</p>
+    </div>
+    <%= link_to "Revisar el acta", order_inspection_path(order, inspection), class: "kz-btn kz-btn--primary" %>
+  </div>
+<% elsif sub_order.balance_enabled? %>
+  <div class="kz-card__body grid gap-3 border-b border-line bg-success-soft/40">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h3 class="kz-h3">El lote pasó la inspección: ya puedes pagar el saldo</h3>
+      <% if inspection&.cerrada? %><%= link_to "Ver el acta", order_inspection_path(order, inspection), class: "kz-btn kz-btn--outline kz-btn--sm" %><% end %>
+    </div>
+    <p class="text-sm">Saldo a <strong><%= sub_order.workshop.name %></strong>: <strong><%= kz_money(sub_order.expected_payment_cop(:saldo)) %></strong>.</p>
+    <% if sub_order.workshop.payment_details.present? %>
+      <p class="text-sm whitespace-pre-line rounded-xl bg-surface px-4 py-3 border border-line"><%= sub_order.workshop.payment_details %></p>
+    <% end %>
+    <p class="text-xs text-ink-muted">Cuando pagues, envíanos el soporte y coordinamos el despacho.</p>
+  </div>
+<% elsif sub_order.reproceso? && inspection&.cerrada? %>
+  <div class="kz-card__body flex flex-wrap items-center justify-between gap-4 border-b border-line bg-danger-soft/40">
+    <div class="grid gap-1">
+      <h3 class="kz-h3">El lote no pasó la inspección</h3>
+      <p class="text-sm text-ink-muted">Despacho y saldo quedan en pausa. El taller reprocesa a su costo<%= " hasta el #{kz_date(inspection.rework_due_on)}" if inspection.rework_due_on %> y volvemos a inspeccionar.</p>
+    </div>
+    <%= link_to "Ver el acta", order_inspection_path(order, inspection), class: "kz-btn kz-btn--outline kz-btn--sm" %>
+  </div>
+<% elsif sub_order.escalado? %>
+  <div class="kz-card__body border-b border-line bg-danger-soft/40 grid gap-1">
+    <h3 class="kz-h3">Estamos resolviendo un segundo rechazo</h3>
+    <p class="text-sm text-ink-muted">El lote no pasó la reinspección. El equipo de KOVZU te contacta para definir si reasignamos, negociamos un descuento o cancelamos.</p>
+  </div>
+<% end %>

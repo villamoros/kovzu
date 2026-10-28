@@ -18,7 +18,8 @@ module Operator
     end
 
     def nav_items
-      [ [ "Tablero", operator_root_path ], [ "Requerimientos", operator_requirements_path ], [ "Talleres", operator_workshops_path ] ]
+      [ [ "Tablero", operator_root_path ], [ "Requerimientos", operator_requirements_path ], [ "Talleres", operator_workshops_path ],
+        [ "Comisiones", operator_commissions_path ] ]
     end
 
     def nav_home_path = operator_root_path

@@ -51,6 +51,11 @@ module KzHelper
     tag.span(label || status[:label], class: [ "kz-status", tone_class ])
   end
 
+  # Porcentaje sin ceros de sobra: "10 %", "8,5 %"
+  def kz_percent(value)
+    "#{number_with_precision(value, precision: 2, strip_insignificant_zeros: true, separator: ",", delimiter: ".")} %"
+  end
+
   # Pesos colombianos: "$ 1.250.000"
   def kz_money(value)
     return "—" if value.nil?

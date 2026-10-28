@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_10_28_110000) do
+ActiveRecord::Schema[8.0].define(version: 2026_10_28_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -96,6 +96,83 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_110000) do
     t.index ["nit"], name: "index_client_companies_on_nit", unique: true, where: "(nit IS NOT NULL)"
   end
 
+  create_table "commission_cuts", force: :cascade do |t|
+    t.date "period_start", null: false
+    t.date "period_end", null: false
+    t.string "generated_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["period_start"], name: "index_commission_cuts_on_period_start", unique: true
+  end
+
+  create_table "commissions", force: :cascade do |t|
+    t.bigint "workshop_id", null: false
+    t.bigint "sub_order_id", null: false
+    t.bigint "payment_id"
+    t.bigint "commission_cut_id"
+    t.bigint "base_cop", null: false
+    t.decimal "percent", precision: 4, scale: 2, null: false
+    t.bigint "amount_cop", null: false
+    t.string "status", default: "causada", null: false
+    t.date "accrued_on", null: false
+    t.string "invoice_number"
+    t.date "invoiced_on"
+    t.date "due_on"
+    t.date "paid_on"
+    t.text "void_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["commission_cut_id"], name: "index_commissions_on_commission_cut_id"
+    t.index ["payment_id"], name: "index_commissions_on_payment_id"
+    t.index ["status"], name: "index_commissions_on_status"
+    t.index ["sub_order_id"], name: "index_commissions_on_sub_order_id"
+    t.index ["workshop_id"], name: "index_commissions_on_workshop_id"
+  end
+
+  create_table "inspection_items", force: :cascade do |t|
+    t.bigint "inspection_id", null: false
+    t.integer "position", default: 0, null: false
+    t.string "key", null: false
+    t.string "label", null: false
+    t.string "tolerance"
+    t.string "result"
+    t.string "measurement"
+    t.string "severity"
+    t.text "note"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["inspection_id"], name: "index_inspection_items_on_inspection_id"
+  end
+
+  create_table "inspections", force: :cascade do |t|
+    t.bigint "sub_order_id", null: false
+    t.integer "number", null: false
+    t.bigint "reinspection_of_id"
+    t.string "status", default: "abierta", null: false
+    t.string "result"
+    t.integer "lot_size"
+    t.integer "sample_size"
+    t.integer "tech_sheet_version"
+    t.text "criteria"
+    t.text "notes"
+    t.date "rework_due_on"
+    t.string "started_by"
+    t.string "closed_by"
+    t.bigint "closed_by_user_id"
+    t.datetime "closed_at"
+    t.string "deviation_status"
+    t.text "deviation_comment"
+    t.string "deviation_decided_by"
+    t.datetime "deviation_decided_at"
+    t.datetime "report_sent_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["closed_by_user_id"], name: "index_inspections_on_closed_by_user_id"
+    t.index ["reinspection_of_id"], name: "index_inspections_on_reinspection_of_id"
+    t.index ["sub_order_id", "number"], name: "index_inspections_on_sub_order_id_and_number", unique: true
+    t.index ["sub_order_id"], name: "index_inspections_on_sub_order_id"
+  end
+
   create_table "milestones", force: :cascade do |t|
     t.bigint "sub_order_id", null: false
     t.string "kind", null: false
@@ -129,6 +206,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_110000) do
     t.index ["code"], name: "index_orders_on_code", unique: true
     t.index ["requirement_id"], name: "index_orders_on_requirement_id"
     t.index ["status"], name: "index_orders_on_status"
+  end
+
+  create_table "payments", force: :cascade do |t|
+    t.bigint "sub_order_id", null: false
+    t.string "kind", null: false
+    t.bigint "amount_cop", null: false
+    t.bigint "expected_cop"
+    t.date "paid_on", null: false
+    t.string "status", default: "vigente", null: false
+    t.text "notes"
+    t.string "registered_by"
+    t.text "void_reason"
+    t.string "voided_by"
+    t.datetime "voided_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["sub_order_id", "kind", "status"], name: "index_payments_on_sub_order_id_and_kind_and_status"
+    t.index ["sub_order_id"], name: "index_payments_on_sub_order_id"
   end
 
   create_table "proposals", force: :cascade do |t|
@@ -171,6 +266,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_110000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "chosen_at"
+    t.datetime "renewal_requested_at"
     t.index ["sub_order_id", "workshop_id"], name: "index_quotes_on_sub_order_id_and_workshop_id", unique: true
     t.index ["sub_order_id"], name: "index_quotes_on_sub_order_id"
     t.index ["tech_sheet_id"], name: "index_quotes_on_tech_sheet_id"
@@ -314,6 +410,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_110000) do
     t.string "status_reason"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "commission_percent", precision: 4, scale: 2, default: "10.0", null: false
+    t.text "payment_details"
     t.index ["nit"], name: "index_workshops_on_nit", unique: true, where: "(nit IS NOT NULL)"
     t.index ["status"], name: "index_workshops_on_status"
   end
@@ -322,9 +420,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_110000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "approvals", "users"
   add_foreign_key "audit_events", "orders"
+  add_foreign_key "commissions", "commission_cuts"
+  add_foreign_key "commissions", "payments"
+  add_foreign_key "commissions", "sub_orders"
+  add_foreign_key "commissions", "workshops"
+  add_foreign_key "inspection_items", "inspections"
+  add_foreign_key "inspections", "inspections", column: "reinspection_of_id"
+  add_foreign_key "inspections", "sub_orders"
+  add_foreign_key "inspections", "users", column: "closed_by_user_id"
   add_foreign_key "milestones", "sub_orders"
   add_foreign_key "orders", "client_companies"
   add_foreign_key "orders", "requirements"
+  add_foreign_key "payments", "sub_orders"
   add_foreign_key "proposals", "orders"
   add_foreign_key "proposals", "quotes"
   add_foreign_key "proposals", "tech_sheets"

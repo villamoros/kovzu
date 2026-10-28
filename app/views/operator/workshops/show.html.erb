@@ -3,8 +3,15 @@
 <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
   <%= render "kz/page_header", back: [ "Talleres", operator_workshops_path ],
         overline: [ "Taller", @workshop.level_label ].compact.join(" · "), title: @workshop.name,
-        status: kz_status(@workshop.status, kind: :workshop),
+        status: safe_join([ kz_status(@workshop.status, kind: :workshop), (tag.span("En mora", class: "kz-status kz-status--danger") if @workshop.delinquent?) ]),
         actions: link_to("Editar", edit_operator_workshop_path(@workshop), class: "kz-btn kz-btn--outline") %>
+
+  <% if @workshop.delinquent? %>
+    <div class="kz-alert kz-alert--danger" role="alert">
+      <%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %>
+      <div><p class="kz-alert__title">En mora con comisiones</p><p class="kz-alert__body">Tiene comisiones facturadas con más de <%= Commission::DELINQUENT_DAYS %> días de mora. No recibe solicitudes de cotización hasta que pague (RN-09). <%= link_to "Ver cartera", operator_commissions_path, class: "kz-link" %></p></div>
+    </div>
+  <% end %>
 
   <% if @workshop.status_reason.present? %>
     <div class="kz-alert kz-alert--warning" role="status">
@@ -28,6 +35,8 @@
           <div class="kz-sheet__row"><dt>Correo</dt><dd><%= @workshop.email.presence || "—" %></dd></div>
           <div class="kz-sheet__row"><dt>Dirección</dt><dd><%= [ @workshop.address, @workshop.neighborhood ].compact_blank.join(" · ").presence || "—" %></dd></div>
           <div class="kz-sheet__row"><dt>Puntaje</dt><dd><%= @workshop.score || "—" %></dd></div>
+          <div class="kz-sheet__row"><dt>Comisión</dt><dd><%= kz_percent(@workshop.commission_percent) %></dd></div>
+          <div class="kz-sheet__row"><dt>Datos de pago</dt><dd class="whitespace-pre-line"><%= @workshop.payment_details.presence || "—" %></dd></div>
           <div class="kz-sheet__row"><dt>Visitado</dt><dd><%= @workshop.visited_at ? kz_date(@workshop.visited_at.to_date) : "—" %></dd></div>
           <div class="kz-sheet__row kz-sheet__row--wide"><dt>Máquinas</dt><dd><%= simple_format(@workshop.machines.presence || "—", {}, wrapper_tag: "span") %></dd></div>
           <% if @workshop.notes.present? %>

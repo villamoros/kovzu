@@ -1,0 +1,111 @@
+<% content_for :title, "Cotizar #{@quote.sub_order.title} · KOVZU" %>
+<% sub_order = @quote.sub_order %>
+<% sheet = @quote.tech_sheet %>
+<% requirement = sub_order.order.requirement %>
+
+<div class="mx-auto max-w-xl px-4 py-6 grid grid-cols-1 gap-5">
+  <header class="grid gap-2">
+    <p class="kz-overline">Solicitud de cotización · <%= @quote.workshop.name %></p>
+    <h1 class="kz-h2"><%= sub_order.title %></h1>
+    <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-muted">
+      <span class="flex items-center gap-1.5"><%= kz_icon sub_order.category.slug, size: 20 %><%= sub_order.category.name %></span>
+      <% if sub_order.quantity %><span><%= number_with_delimiter(sub_order.quantity, delimiter: ".") %> unidades</span><% end %>
+      <% if requirement&.required_on %><span>Se necesita el <%= kz_date(requirement.required_on) %></span><% end %>
+    </p>
+  </header>
+
+  <% if @quote.answered? %>
+    <section class="kz-card kz-card__body grid gap-3">
+      <% if @quote.rechazada? %>
+        <h2 class="kz-h3">Marcaste que no cotizas</h2>
+        <p class="text-sm text-ink-muted">Motivo: <%= @quote.decline_reason %></p>
+      <% else %>
+        <div class="flex items-center gap-2">
+          <%= kz_glyph :check, size: 22, class: "text-success" %>
+          <h2 class="kz-h3">Cotización enviada</h2>
+        </div>
+        <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+          <dt class="text-ink-muted">Precio antes de IVA</dt><dd class="m-0 font-medium"><%= kz_money(@quote.price_cop) %></dd>
+          <dt class="text-ink-muted">Plazo</dt><dd class="m-0"><%= @quote.lead_days %> días hábiles</dd>
+          <dt class="text-ink-muted">Vigencia</dt><dd class="m-0"><%= @quote.valid_until ? l(@quote.valid_until, format: :long) : "—" %></dd>
+          <% if @quote.conditions.present? %><dt class="text-ink-muted">Condiciones</dt><dd class="m-0"><%= @quote.conditions %></dd><% end %>
+          <dt class="text-ink-muted">Ficha aceptada</dt><dd class="m-0">Versión <%= sheet.version %></dd>
+        </dl>
+        <p class="text-sm text-ink-muted">Ya no se puede editar. Si necesitas cambiar algo, escríbele al equipo de KOVZU.</p>
+      <% end %>
+    </section>
+  <% elsif !@quote.link_usable? %>
+    <div class="kz-alert kz-alert--warning" role="status">
+      <%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %>
+      <div>
+        <p class="kz-alert__title"><%= sheet.reemplazada? ? "La ficha técnica cambió" : "Este enlace venció" %></p>
+        <p class="kz-alert__body">
+          <%= sheet.reemplazada? ? "Hay una versión nueva de la ficha. Pide un enlace nuevo para cotizar sobre la vigente." : "Venció el #{l(@quote.link_expires_at.to_date, format: :long)}. Pide uno nuevo y te lo enviamos." %>
+        </p>
+      </div>
+    </div>
+    <% if @quote.renewal_requested_at %>
+      <p class="kz-card kz-card__body text-sm">Ya pediste un enlace nuevo el <%= kz_date(@quote.renewal_requested_at.to_date) %>. Te llega por WhatsApp o correo.</p>
+    <% else %>
+      <%= button_to "Pedir un enlace nuevo", renewal_workshop_quote_path(@quote.token), class: "kz-btn kz-btn--primary kz-btn--lg w-full" %>
+    <% end %>
+  <% else %>
+    <section class="kz-card">
+      <div class="kz-card__header">
+        <h2 class="kz-card__title">Ficha técnica</h2>
+        <span class="text-sm text-ink-muted">v<%= format("%02d", sheet.version) %></span>
+      </div>
+      <div class="kz-card__body grid gap-4">
+        <%= render "portal/orders/tech_sheet", sheet: %>
+      </div>
+    </section>
+
+    <% if requirement %>
+      <%= render "shared/requirement_files", requirement: %>
+    <% end %>
+
+    <%= form_with model: @quote, url: workshop_quote_path(@quote.token), method: :patch, class: "kz-card kz-card__body grid gap-5" do |f| %>
+      <h2 class="kz-h3">Tu cotización</h2>
+      <div class="grid grid-cols-1 gap-4">
+        <div class="kz-field">
+          <%= f.label :price_cop, "Precio total antes de IVA (COP)", class: "kz-label" %>
+          <%= f.number_field :price_cop, class: "kz-input", min: 1, step: 1, required: true, inputmode: "numeric", placeholder: "1450000" %>
+          <p class="kz-hint">Por las <%= number_with_delimiter(sub_order.quantity, delimiter: ".") if sub_order.quantity %> unidades, con lo que pide la ficha.</p>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="kz-field">
+            <%= f.label :lead_days, "Plazo (días hábiles)", class: "kz-label" %>
+            <%= f.number_field :lead_days, class: "kz-input", min: 1, step: 1, required: true, inputmode: "numeric" %>
+          </div>
+          <div class="kz-field">
+            <%= f.label :valid_until, "Vigencia hasta", class: "kz-label" %>
+            <%= f.date_field :valid_until, class: "kz-input", min: Date.current, required: true, value: @quote.valid_until || Date.current + 8 %>
+          </div>
+        </div>
+        <div class="kz-field">
+          <%= f.label :conditions, class: "kz-label" do %>Condiciones <small>(opcional)</small><% end %>
+          <%= f.text_area :conditions, class: "kz-textarea", rows: 3, placeholder: "Incluye troquel. Anticipo del 50 %. Entrega en Cali." %>
+        </div>
+        <label class="kz-check">
+          <%= check_box_tag :accept_sheet, "1", false, required: true %>
+          <span>Leí la ficha técnica v<%= sheet.version %> y la acepto como criterio de calidad.</span>
+        </label>
+      </div>
+      <button class="kz-btn kz-btn--primary kz-btn--lg w-full">Enviar cotización</button>
+      <p class="kz-hint text-center">Después de enviarla ya no se puede editar. Enlace vigente hasta el <%= kz_date(@quote.link_expires_at.to_date) %>.</p>
+    <% end %>
+
+    <details class="kz-card">
+      <summary class="px-6 py-4 cursor-pointer text-sm font-medium text-ink-muted">No puedo cotizar</summary>
+      <%= form_with url: decline_workshop_quote_path(@quote.token), class: "px-6 pb-6 grid gap-4" do %>
+        <div class="kz-field">
+          <label class="kz-label" for="reason">Motivo</label>
+          <%= text_area_tag :reason, nil, class: "kz-textarea", required: true, placeholder: "No tengo capacidad para esa fecha." %>
+        </div>
+        <button class="kz-btn kz-btn--outline">No cotizo</button>
+      <% end %>
+    </details>
+  <% end %>
+
+  <p class="text-center text-xs text-ink-muted">KOVZU · Red de manufactura verificada · Cali</p>
+</div>

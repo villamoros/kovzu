@@ -5,7 +5,7 @@ require "rails/test_help"
 module ActiveSupport
   class TestCase
     # Run tests in parallel with specified workers
-    parallelize(workers: :number_of_processors, with: :threads)
+    parallelize(workers: :number_of_processors)
 
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
@@ -18,7 +18,8 @@ module ActiveSupport
         { "key" => "material", "label" => "Material", "required" => true },
         { "key" => "acabado", "label" => "Acabado" }
       ]
-      Category.find_by(slug:) || Category.create!(slug:, name: slug.capitalize, min_lead_days: 5, tech_sheet_template: fields)
+      checks = [ { "key" => "medidas", "label" => "Medidas internas", "tolerance" => "± 1 mm" }, { "key" => "cantidad", "label" => "Cantidad completa" } ]
+      Category.find_by(slug:) || Category.create!(slug:, name: slug.capitalize, min_lead_days: 5, tech_sheet_template: fields, inspection_template: checks)
     end
 
     def create_workshop(name, category: nil, status: "verificado", level: nil, score: nil, min_volume: nil, max_volume: nil)
@@ -64,7 +65,44 @@ module ActiveSupport
     end
 
     def client_user(company, email: "laura@aromas.co")
-      User.create!(clerk_id: "user_#{email}", email:, first_name: "Laura", role: "cliente", client_company: company)
+      User.find_by(email:) || User.create!(clerk_id: "user_#{email}", email:, first_name: "Laura", role: "cliente", client_company: company)
+    end
+
+    def staff_user(role: "inspector", email: "pedro@kovzu.co")
+      User.find_by(email:) || User.create!(clerk_id: "user_#{email}", email:, first_name: "Pedro", role:)
+    end
+
+    def pay!(sub_order, kind, amount: nil, confirm_mismatch: false)
+      sub_order.register_payment!(kind:, amount_cop: amount || sub_order.expected_payment_cop(kind), paid_on: Date.current,
+                                  support: fixture_upload("soporte.pdf", "application/pdf"), confirm_mismatch:, by: "Ana")
+    end
+
+    # Propuesta aceptada: el subpedido espera el anticipo.
+    def confirmed_sub_order
+      sub_order = quoted_sub_order
+      send_proposal(sub_order).accept!(user: client_user(sub_order.order.client_company))
+      sub_order.reload
+    end
+
+    # Anticipo pagado, muestra aprobada y producción terminada: lista para inspeccionar.
+    def sub_order_in_inspection
+      sub_order = confirmed_sub_order
+      pay!(sub_order, "anticipo")
+      sample = sub_order.reload.register_sample!(kind: "fisica", notes: nil, photos: [ fixture_upload("muestra.png", "image/png") ], by: "Ana")
+      sample.approve!(user: client_user(sub_order.order.client_company))
+      sub_order.reload.finish_production!(by: "Ana")
+      sub_order.reload
+    end
+
+    # Llena el checklist: todo conforme, o no conforme (con foto y severidad) en los ítems indicados.
+    def fill_inspection(inspection, nonconforming: {})
+      items = inspection.items.to_h do |item|
+        severity = nonconforming[item.key]
+        [ item.id.to_s, severity ? { "result" => "no_conforme", "severity" => severity, "note" => "Fuera de tolerancia" } : { "result" => "conforme" } ]
+      end
+      photos = inspection.items.select { |item| nonconforming.key?(item.key) }.to_h { |item| [ item.id.to_s, [ fixture_upload("muestra.png", "image/png") ] ] }
+      inspection.record!(items, notes: "Revisión en planta", photos:)
+      inspection.reload
     end
   end
 end

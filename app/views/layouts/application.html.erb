@@ -24,7 +24,7 @@
     <%= render "kz/app_header",
           items: nav_items,
           home_path: nav_home_path,
-          actions: render("layouts/session_actions") %>
+          actions: (render("layouts/session_actions") unless public_page?) %>
     <%= render "kz/flash" %>
 
     <main>

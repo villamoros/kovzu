@@ -1,0 +1,12 @@
+Ya puedes pagar el saldo
+
+Pedido <%= @order.code %> · <%= @sub_order.title %>
+El lote pasó la inspección. El saldo a <%= @sub_order.workshop.name %> es de <%= number_to_currency(@amount, precision: 0) %>.
+<% if @sub_order.workshop.payment_details.present? %>
+<%= @sub_order.workshop.payment_details %>
+<% else %>
+Te enviamos los datos de pago del taller por WhatsApp.
+<% end %>
+Cuando pagues, envíanos el soporte y coordinamos el despacho.
+
+Ver pedido: <%= @url %>

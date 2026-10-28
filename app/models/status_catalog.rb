@@ -60,6 +60,25 @@ module StatusCatalog
       "aprobada"    => { label: "Aprobada",    tone: :success },
       "rechazada"   => { label: "Rechazada",   tone: :danger }
     },
+    inspection: {
+      "abierta" => { label: "En curso", tone: :warning },
+      "cerrada" => { label: "Cerrada",  tone: :neutral }
+    },
+    inspection_result: {
+      "aprobado"                => { label: "Aprobado",                tone: :success },
+      "aprobado_con_desviacion" => { label: "Aprobado con desviación", tone: :warning },
+      "rechazado"               => { label: "Rechazado",               tone: :danger }
+    },
+    payment: {
+      "vigente" => { label: "Registrado", tone: :success },
+      "anulado" => { label: "Anulado",    tone: :neutral }
+    },
+    commission: {
+      "causada"   => { label: "Causada",   tone: :info },
+      "facturada" => { label: "Facturada", tone: :warning },
+      "pagada"    => { label: "Pagada",    tone: :success },
+      "anulada"   => { label: "Anulada",   tone: :neutral }
+    },
     workshop: {
       "prospecto"       => { label: "Prospecto",       tone: :neutral },
       "en_verificacion" => { label: "En verificación", tone: :info },

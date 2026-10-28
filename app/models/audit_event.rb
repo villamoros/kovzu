@@ -12,7 +12,7 @@ class AuditEvent < ApplicationRecord
   def self.order_for(subject)
     case subject
     when Order then subject
-    when SubOrder, Sample, Proposal then subject.order
+    when SubOrder, Sample, Proposal, Inspection, Payment then subject.order
     when TechSheet, Quote, Milestone then subject.sub_order.order
     when Requirement then subject.order
     end

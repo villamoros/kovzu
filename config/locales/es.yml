@@ -86,6 +86,11 @@ es:
       milestone: Hito
       proposal: Propuesta
       sample: Muestra
+      inspection: Inspección
+      inspection_item: Ítem de inspección
+      payment: Pago
+      commission: Comisión
+      commission_cut: Corte de comisiones
     attributes:
       client_company:
         name: Nombre
@@ -100,6 +105,8 @@ es:
         score: Puntaje
         email: Correo
         capabilities: Capacidades
+        commission_percent: Comisión
+        payment_details: Datos de pago
       workshop/capabilities:
         category: Categoría
         category_id: Categoría
@@ -134,6 +141,7 @@ es:
         workshop: Taller
         price_cop: Precio
         lead_days: Plazo
+        valid_until: Vigencia
       proposal:
         management_fee_cop: Fee de gestión
         advance_percent: Anticipo
@@ -142,6 +150,13 @@ es:
       sample:
         photos: La muestra
         kind: Tipo
+      payment:
+        amount_cop: Valor
+        paid_on: Fecha del pago
+        support: El soporte
+        kind: Tipo
+      inspection_item:
+        photos: Fotos
       milestone:
         committed_on: Fecha comprometida
         reschedule_reason: Motivo
@@ -160,10 +175,13 @@ es:
     pedido:
       creado: Pedido creado
       confirmado: Pedido confirmado
+      escalado: Pedido escalado por segundo rechazo
     cotizacion:
       solicitada: Cotizaciones solicitadas
       recibida: Cotización cargada
       rechazada: El taller no cotiza
+      enlace_pedido: El taller pidió un enlace nuevo
+      enlace_renovado: Enlace de cotización renovado
     propuesta:
       enviada: Propuesta enviada al cliente
       cambios_solicitados: El cliente pidió cambios
@@ -172,6 +190,23 @@ es:
       registrada: Muestra registrada
       aprobada: Muestra aprobada por el cliente
       rechazada: Muestra rechazada por el cliente
+    produccion:
+      terminada: Producción terminada
+      reproceso_terminado: Reproceso terminado
+    inspeccion:
+      iniciada: Inspección iniciada
+      cerrada: Inspección cerrada
+      desviacion_aceptada: El cliente aceptó la desviación
+      desviacion_rechazada: El cliente rechazó la desviación
+    pago:
+      registrado: Pago registrado
+      anulado: Pago anulado
+    subpedido:
+      entregado: Subpedido entregado
+    comision:
+      corte: Corte de comisiones generado
+      facturada: Comisiones facturadas
+      pagada: Comisiones pagadas
     ficha:
       lista: Ficha técnica lista
       nueva_version: Nueva versión de la ficha
