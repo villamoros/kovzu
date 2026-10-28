@@ -2,7 +2,8 @@ class ApplicationController < ActionController::Base
   include Clerk::Authenticatable
 
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
-  allow_browser versions: :modern
+  # Las páginas abiertas por enlace (el taller cotizando) no se bloquean: el formulario funciona sin JavaScript.
+  allow_browser versions: :modern, unless: :public_page?
 
   helper_method :current_user, :signed_in?, :nav_items, :nav_home_path, :public_page?
 
