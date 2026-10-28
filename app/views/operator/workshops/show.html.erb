@@ -4,7 +4,7 @@
   <%= render "kz/page_header", back: [ "Talleres", operator_workshops_path ],
         overline: [ "Taller", @workshop.level_label ].compact.join(" · "), title: @workshop.name,
         status: safe_join([ kz_status(@workshop.status, kind: :workshop), (tag.span("En mora", class: "kz-status kz-status--danger") if @workshop.delinquent?) ]),
-        actions: link_to("Editar", edit_operator_workshop_path(@workshop), class: "kz-btn kz-btn--outline") %>
+        actions: (link_to("Editar", edit_operator_workshop_path(@workshop), class: "kz-btn kz-btn--outline") if can_operate?) %>
 
   <% if @workshop.delinquent? %>
     <div class="kz-alert kz-alert--danger" role="alert">
@@ -107,7 +107,9 @@
           <% end %>
         </ul>
 
-        <% if @workshop.prospecto? %>
+        <% if !can_operate? %>
+          <p class="kz-hint">La verificación de talleres la hace un operador.</p>
+        <% elsif @workshop.prospecto? %>
           <% if missing.any? %>
             <p class="kz-hint">Completa el checklist en <%= link_to "Editar", edit_operator_workshop_path(@workshop), class: "kz-link" %> para pasarlo a verificación.</p>
           <% else %>
@@ -123,7 +125,7 @@
         <% end %>
       </section>
 
-      <% if @workshop.verificado? %>
+      <% if can_operate? && @workshop.verificado? %>
         <details class="kz-card">
           <summary class="px-6 py-4 cursor-pointer text-sm font-medium text-ink-muted">Pausar taller</summary>
           <%= form_with url: pause_operator_workshop_path(@workshop), class: "px-6 pb-6 grid gap-4" do %>
@@ -137,7 +139,7 @@
         </details>
       <% end %>
 
-      <% unless @workshop.retirado? %>
+      <% if can_operate? && !@workshop.retirado? %>
         <details class="kz-card">
           <summary class="px-6 py-4 cursor-pointer text-sm font-medium text-ink-muted">Retirar de la red</summary>
           <%= form_with url: retire_operator_workshop_path(@workshop), class: "px-6 pb-6 grid gap-4" do %>

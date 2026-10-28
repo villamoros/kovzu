@@ -1,6 +1,8 @@
 module Operator
   # Registro y verificación de talleres (HU-16).
   class WorkshopsController < BaseController
+    inspector_can :index, :show
+
     before_action :set_workshop, except: %i[index new create]
 
     def index

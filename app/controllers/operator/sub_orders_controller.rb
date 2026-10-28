@@ -1,6 +1,9 @@
 module Operator
   # Avances del subpedido que dispara el operador: producción terminada (CU-07) y entrega.
   class SubOrdersController < BaseController
+    # El inspector confirma en planta que el taller terminó, para empezar la inspección.
+    inspector_can :finish_production
+
     before_action :set_sub_order
 
     def finish_production

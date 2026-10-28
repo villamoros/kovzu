@@ -41,7 +41,7 @@
                 <dd class="m-0 <%= "italic text-ink-muted" if sheet.value(field["key"]).blank? %>"><%= sheet.value(field["key"]).presence || "Pendiente" %></dd>
               <% end %>
             </dl>
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-2 <%= "hidden" unless can_operate? %>">
               <%= link_to (sheet.editable? ? "Editar ficha" : "Ver o crear versión nueva"), edit_operator_tech_sheet_path(sheet), class: "kz-btn kz-btn--outline kz-btn--sm" %>
               <% if (sheet.lista? || sheet.aceptada?) && sub_order.quotes.empty? && (sub_order.preparacion? || sub_order.cotizando?) %>
                 <%= link_to "Pedir cotizaciones", new_operator_sub_order_quote_request_path(sub_order), class: "kz-btn kz-btn--primary kz-btn--sm" %>

@@ -12,20 +12,21 @@
             <span class="font-medium"><%= label %> <span class="text-ink-muted font-normal">· pactado <%= kz_money(sub_order.expected_payment_cop(kind)) %></span></span>
             <% if payment %>
               <%= kz_status "vigente", kind: :payment, label: "Pagado #{kz_date(payment.paid_on)}" %>
-            <% elsif kind == "anticipo" && sub_order.can_register_advance? %>
+            <% elsif can_operate? && kind == "anticipo" && sub_order.can_register_advance? %>
               <%= link_to "Registrar anticipo", new_operator_sub_order_payment_path(sub_order, tipo: "anticipo"), class: "kz-btn kz-btn--primary kz-btn--sm" %>
-            <% elsif kind == "saldo" && sub_order.balance_enabled? %>
+            <% elsif can_operate? && kind == "saldo" && sub_order.balance_enabled? %>
               <%= link_to "Registrar saldo", new_operator_sub_order_payment_path(sub_order, tipo: "saldo"), class: "kz-btn kz-btn--primary kz-btn--sm" %>
             <% else %>
-              <span class="text-xs text-ink-muted"><%= kind == "saldo" ? "Se habilita con el acta aprobada" : "Pendiente" %></span>
+              <span class="text-xs text-ink-muted"><%= kind == "saldo" && !sub_order.balance_enabled? ? "Se habilita con el acta aprobada" : "Pendiente" %></span>
             <% end %>
           </div>
           <% if payment %>
             <span class="text-ink-muted">
               <%= kz_money(payment.amount_cop) %><% if payment.mismatch? %> · <span class="text-warning">diferencia de <%= kz_money(payment.difference_cop) %> confirmada</span><% end %>
-              · <%= link_to "Soporte", attachment_file_path(payment.support), class: "kz-link", target: "_blank", rel: "noopener" %>
+              <% if can_operate? %>· <%= link_to "Soporte", attachment_file_path(payment.support), class: "kz-link", target: "_blank", rel: "noopener" %><% end %>
               · <%= payment.registered_by %>
             </span>
+            <% if can_operate? %>
             <details>
               <summary class="cursor-pointer text-xs text-ink-muted">Anular</summary>
               <%= form_with url: void_operator_payment_path(payment), class: "mt-2 flex flex-wrap gap-2 items-end" do %>
@@ -36,6 +37,7 @@
                 <button class="kz-btn kz-btn--outline kz-btn--sm">Anular pago</button>
               <% end %>
             </details>
+            <% end %>
           <% end %>
         </li>
       <% end %>
@@ -45,7 +47,7 @@
       <p class="text-xs text-ink-muted">
         <% voided.each do |payment| %>
           <%= payment.kind_label %> de <%= kz_money(payment.amount_cop) %> anulado por <%= payment.voided_by %>: <%= payment.void_reason %>
-          (<%= link_to "soporte", attachment_file_path(payment.support), class: "kz-link", target: "_blank", rel: "noopener" %>).
+          <% if can_operate? %>(<%= link_to "soporte", attachment_file_path(payment.support), class: "kz-link", target: "_blank", rel: "noopener" %>)<% end %>.
         <% end %>
       </p>
     <% end %>
@@ -60,7 +62,7 @@
       <% elsif sub_order.inspeccion? %>
         <%= button_to (inspection&.abierta? ? "Continuar inspección" : "Iniciar inspección"), operator_sub_order_inspections_path(sub_order),
               class: "kz-btn kz-btn--primary kz-btn--sm" %>
-      <% elsif sub_order.aprobado? && sub_order.balance_paid? %>
+      <% elsif can_operate? && sub_order.aprobado? && sub_order.balance_paid? %>
         <%= button_to "Registrar entrega", deliver_operator_sub_order_path(sub_order), class: "kz-btn kz-btn--primary kz-btn--sm",
               form: { data: { turbo_confirm: "¿El lote llegó al cliente?" } } %>
       <% end %>

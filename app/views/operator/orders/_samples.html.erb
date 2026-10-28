@@ -2,7 +2,7 @@
 <div class="border-t border-line kz-card__body grid gap-4">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <h3 class="kz-overline">Muestras<% if sub_order.rejection_count.positive? %> · <%= sub_order.rejection_count %> rechazo<%= "s" unless sub_order.rejection_count == 1 %><% end %></h3>
-    <% if sub_order.can_register_sample? %>
+    <% if can_operate? && sub_order.can_register_sample? %>
       <%= link_to "Registrar muestra", new_operator_sub_order_sample_path(sub_order), class: "kz-btn kz-btn--primary kz-btn--sm" %>
     <% end %>
   </div>
