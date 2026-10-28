@@ -18,8 +18,7 @@ gem "stimulus-rails"
 gem "tailwindcss-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
-# json 3.x drops the quirks_mode option that Active Support 8.0 still passes
-gem "json", "~> 2.10"
+gem "json", "~> 3.1"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
@@ -71,7 +70,7 @@ group :test do
 end
 
 # Authentication (Clerk)
-gem "clerk-sdk-ruby", "~> 4.2", require: "clerk"
+gem "clerk-sdk-ruby", "~> 8.0", require: "clerk"
 
 # Acta de inspección en PDF (HU-13)
 gem "prawn", "~> 2.5"
