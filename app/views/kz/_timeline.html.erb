@@ -1,0 +1,24 @@
+<%# locals: (milestones:) -%>
+<%#
+  Línea de tiempo del pedido (HU-08). Cada hito es un hash:
+    { title: "Muestra aprobada", state: :done, committed: Date, actual: Date, by: "Laura Gómez" }
+  state: :done (cumplido), :current (en curso), :late (atrasado) o :pending (por venir)
+-%>
+<ol class="kz-timeline">
+  <% milestones.each do |milestone| %>
+    <% state = (milestone[:state] || :pending).to_sym %>
+    <li class="kz-timeline__item is-<%= state %>" <%= "aria-current=step" if state == :current %>>
+      <span class="kz-timeline__marker" aria-hidden="true"></span>
+      <div>
+        <p class="kz-timeline__title"><%= milestone[:title] %></p>
+        <p class="kz-timeline__meta">
+          <% parts = [] %>
+          <% parts << safe_join([ "Comprometida ", tag.strong(kz_date(milestone[:committed])) ]) if milestone[:committed] %>
+          <% parts << "Real #{kz_date(milestone[:actual])}" if milestone[:actual] %>
+          <% parts << milestone[:by] if milestone[:by] %>
+          <%= safe_join(parts, " · ") %>
+        </p>
+      </div>
+    </li>
+  <% end %>
+</ol>

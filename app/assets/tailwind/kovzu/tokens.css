@@ -1,0 +1,142 @@
+/*
+  KOVZU · Tokens del sistema de diseño
+  Fuente: Manual de identidad v1.0 (27 oct 2026).
+
+  Los colores viven como variables CSS semánticas (--ink, --surface, --accent…)
+  para que el modo oscuro solo cambie valores. Tailwind los expone como
+  utilidades: bg-surface, text-ink, border-line, bg-accent, text-danger, etc.
+
+  Modo oscuro: <html data-theme="dark">. La variante dark: de Tailwind sigue
+  ese atributo (ver kz/_head.html.erb y theme_controller.js).
+*/
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  color-scheme: light;
+
+  /* Superficies */
+  --ground: #F5F4ED;          /* Marfil: fondo de la app y de documentos */
+  --surface: #FFFFFF;         /* Tarjetas, tablas, formularios */
+  --surface-muted: #E9ECE8;   /* Indicadores, zonas secundarias */
+  --chip: #EEF2F5;            /* Fondo de estados y etiquetas */
+  --chrome: #0B1F33;          /* Barra superior */
+  --line: #D9DDD9;            /* Divisores finos */
+  --line-strong: #7A7F86;     /* Bordes de controles (3:1 o más) */
+
+  /* Texto */
+  --ink: #0B1F33;             /* Azul profundo: texto principal */
+  --ink-carbon: #1F1F1F;      /* Carbón: contraste alternativo */
+  --ink-muted: #596675;       /* Texto secundario, metadatos legibles */
+  --ink-subtle: #7A7F86;      /* Gris industrial: iconos y marcas, no texto pequeño */
+  --on-chrome: #F5F4ED;
+  --on-chrome-muted: #A7B3BF;
+
+  /* Acción */
+  --accent: #C7F23A;          /* Verde lima: acción, foco, selección */
+  --accent-hover: #B6E024;
+  --on-accent: #0B1F33;
+  --brand: #0B1F33;           /* Botón secundario */
+  --brand-hover: #16304A;
+  --on-brand: #F5F4ED;
+  --focus: #0B1F33;           /* Anillo de foco, 3:1 o más sobre cualquier superficie */
+  --focus-halo: #C7F23A80;
+
+  /* Funcionales */
+  --success: #166534;
+  --success-soft: #E6F2E9;
+  --warning: #92400E;
+  --warning-soft: #FBEEDD;
+  --danger: #B42318;
+  --danger-soft: #FBE8E6;
+  --on-danger: #FFFFFF;
+  --info: #1D4ED8;
+  --info-soft: #E7EDFD;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ground: #07131F;
+  --surface: #0B1F33;
+  --surface-muted: #12293F;
+  --chip: #17324C;
+  --chrome: #0B1F33;
+  --line: #1E3A55;
+  --line-strong: #6B8196;
+
+  --ink: #F5F4ED;
+  --ink-carbon: #F5F4ED;
+  --ink-muted: #A7B3BF;
+  --ink-subtle: #7F8D9B;
+  --on-chrome: #F5F4ED;
+  --on-chrome-muted: #A7B3BF;
+
+  --accent: #C7F23A;
+  --accent-hover: #D6F76A;
+  --on-accent: #0B1F33;
+  --brand: #F5F4ED;
+  --brand-hover: #FFFFFF;
+  --on-brand: #0B1F33;
+  --focus: #C7F23A;
+  --focus-halo: #C7F23A59;
+
+  --success: #6FD08C;
+  --success-soft: #10301D;
+  --warning: #F2A65A;
+  --warning-soft: #35230E;
+  --danger: #F4877E;
+  --danger-soft: #3B1714;
+  --on-danger: #0B1F33;
+  --info: #8AB4F8;
+  --info-soft: #12264A;
+}
+
+@theme inline {
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-chip: var(--chip);
+  --color-chrome: var(--chrome);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-carbon: var(--ink-carbon);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-on-chrome: var(--on-chrome);
+  --color-on-chrome-muted: var(--on-chrome-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-on-accent: var(--on-accent);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-on-brand: var(--on-brand);
+  --color-focus: var(--focus);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-on-danger: var(--on-danger);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+}
+
+@theme {
+  /* Sora para títulos y mensajes cortos; Inter para interfaz y datos */
+  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Radios: controles 10px, tarjetas 14px, paneles 20px */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* Sombras discretas: la marca separa con líneas finas, no con sombras */
+  --shadow-sm: 0 1px 2px rgb(11 31 51 / 0.06);
+  --shadow-md: 0 1px 2px rgb(11 31 51 / 0.06), 0 8px 24px -8px rgb(11 31 51 / 0.14);
+  --shadow-lg: 0 2px 4px rgb(11 31 51 / 0.06), 0 24px 48px -12px rgb(11 31 51 / 0.22);
+}

@@ -1,0 +1,14 @@
+<%# Avisos de flash con el estilo KOVZU. notice → éxito, alert → error. -%>
+<% flash.each do |type, message| %>
+  <% tone = { "notice" => "success", "alert" => "danger" }.fetch(type.to_s, "info") %>
+  <div class="kz-alert kz-alert--<%= tone %>"
+       role="<%= tone == "danger" ? "alert" : "status" %>"
+       data-controller="dismiss"
+       data-dismiss-after-value="<%= tone == "danger" ? 0 : 6000 %>">
+    <%= kz_glyph({ "success" => :check, "danger" => :alert }.fetch(tone, :info), size: 20, class: "kz-alert__icon") %>
+    <p class="kz-alert__body" style="margin: 0"><%= message %></p>
+    <button type="button" class="kz-alert__close" data-action="dismiss#close" aria-label="Cerrar aviso">
+      <%= kz_glyph :close, size: 16 %>
+    </button>
+  </div>
+<% end %>

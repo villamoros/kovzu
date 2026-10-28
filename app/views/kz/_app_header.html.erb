@@ -1,0 +1,21 @@
+<%# locals: (items: [], home_path: "/", actions: nil) -%>
+<%# items: [["Pedidos", pedidos_path], ["Talleres", talleres_path]] · actions: HTML extra (p. ej. el botón de usuario de Clerk) -%>
+<header class="kz-appbar">
+  <%= link_to home_path, class: "kz-appbar__brand", aria: { label: "KOVZU, inicio" } do %>
+    <%= kz_logo :lockup %>
+  <% end %>
+
+  <nav class="kz-appbar__nav" aria-label="Principal">
+    <% items.each do |label, path| %>
+      <%= link_to label, path, aria: { current: (current_page?(path) ? "page" : nil) } %>
+    <% end %>
+  </nav>
+
+  <div class="kz-appbar__actions">
+    <button type="button" class="kz-btn kz-btn--ghost kz-btn--icon" data-controller="theme" data-action="theme#toggle" aria-label="Cambiar tema">
+      <%= kz_glyph :moon, size: 18, class: "dark:hidden" %>
+      <%= kz_glyph :sun, size: 18, class: "hidden dark:block" %>
+    </button>
+    <%= actions %>
+  </div>
+</header>

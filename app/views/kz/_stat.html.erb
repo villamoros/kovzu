@@ -1,0 +1,9 @@
+<%# locals: (label:, value:, tone: :neutral, meta: nil) -%>
+<%# Indicador del tablero. tone: :neutral, :info, :success, :warning o :danger -%>
+<div class="kz-stat <%= "kz-stat--#{tone}" unless tone.to_sym == :neutral %>">
+  <span class="kz-stat__label"><%= label %></span>
+  <span class="kz-stat__value"><%= value %></span>
+  <% if meta %>
+    <span class="kz-stat__meta"><%= meta %></span>
+  <% end %>
+</div>
