@@ -3,7 +3,7 @@
 <% slots = SubOrder::MAX_QUOTES - @sub_order.open_quotes.count %>
 
 <div class="mx-auto max-w-4xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
-  <%= render "operator/shared/page_header", back: [ "Pedido #{order.code}", operator_order_path(order) ],
+  <%= render "kz/page_header", back: [ "Pedido #{order.code}", operator_order_path(order) ],
         overline: "Pedir cotizaciones · #{@sub_order.category.name}", title: @sub_order.title %>
 
   <p class="text-ink-muted max-w-2xl">Elige hasta <%= slots %> taller<%= "es" unless slots == 1 %>. Cada uno recibe un enlace que vence en 5 días, con la ficha v<%= format("%02d", @tech_sheet.version) %> y sin los datos de contacto del cliente. Solo aparecen talleres verificados con capacidad en <%= @sub_order.category.name %><%= " para #{number_with_delimiter(@sub_order.quantity, delimiter: ".")} unidades" if @sub_order.quantity %>, ordenados por nivel y puntaje.</p>

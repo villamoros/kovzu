@@ -16,7 +16,19 @@ module BusinessDays
     ((from + 1)..to).count { |day| weekday?(day) }
   end
 
+  def ago(days, from: Date.current)
+    date = from.to_date
+    days.times { date = previous_day(date) }
+    date
+  end
+
   def weekday?(date) = !date.saturday? && !date.sunday?
+
+  def previous_day(date)
+    date -= 1
+    date -= 1 until weekday?(date)
+    date
+  end
 
   def next_day(date)
     date += 1

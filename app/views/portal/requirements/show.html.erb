@@ -1,0 +1,81 @@
+<% content_for :title, "#{@requirement.title} · KOVZU" %>
+
+<div class="mx-auto max-w-5xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", back: [ "Requerimientos", requirements_path ], overline: "Requerimiento",
+        title: @requirement.title, status: kz_status(@requirement.status, kind: :requirement) %>
+
+  <% if @requirement.esperando_cliente? %>
+    <%= form_with url: answer_requirement_path(@requirement), class: "kz-card kz-card__body grid gap-4 border-warning" do %>
+      <div class="grid gap-1">
+        <h2 class="kz-h3">Necesitamos un dato más</h2>
+        <p class="text-sm text-ink-muted">Responde y tu requerimiento vuelve a revisión.</p>
+      </div>
+      <div class="grid gap-2 rounded-xl bg-surface-muted p-4 text-sm"><%= simple_format(@requirement.messages.select { |message| message.author_role == "operador" }.last&.body) %></div>
+      <div class="kz-field">
+        <label class="kz-label" for="answer">Tu respuesta</label>
+        <%= text_area_tag :answer, nil, class: "kz-textarea", required: true, rows: 4 %>
+      </div>
+      <div class="flex justify-end"><button class="kz-btn kz-btn--primary">Enviar respuesta</button></div>
+    <% end %>
+  <% elsif @requirement.no_viable? %>
+    <div class="kz-alert" role="status">
+      <%= kz_glyph :info, size: 20, class: "kz-alert__icon" %>
+      <div><p class="kz-alert__title">No lo podemos tomar por ahora</p><p class="kz-alert__body"><%= @requirement.rejection_reason %></p></div>
+    </div>
+  <% elsif @requirement.order %>
+    <div class="kz-alert kz-alert--success" role="status">
+      <%= kz_glyph :check, size: 20, class: "kz-alert__icon" %>
+      <div><p class="kz-alert__title">Ya es el pedido <%= @requirement.order.code %></p><p class="kz-alert__body"><%= link_to "Ver el pedido", order_path(@requirement.order), class: "kz-link" %> para seguir la cotización y la producción.</p></div>
+    </div>
+  <% elsif @requirement.en_revision? %>
+    <div class="kz-alert" role="status">
+      <%= kz_glyph :info, size: 20, class: "kz-alert__icon" %>
+      <div><p class="kz-alert__title">Lo estamos revisando</p><p class="kz-alert__body">Si falta algo te escribimos. Si está completo, armamos la ficha técnica y pedimos cotizaciones.</p></div>
+    </div>
+  <% end %>
+
+  <% if @requirement.tight_deadline? && !@requirement.no_viable? %>
+    <div class="kz-alert kz-alert--warning" role="status">
+      <%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %>
+      <div><p class="kz-alert__title">Fecha ajustada</p><p class="kz-alert__body">Pediste el <%= kz_date(@requirement.required_on) %>, antes del plazo mínimo de <%= @requirement.category.min_lead_days %> días hábiles. Te confirmamos qué es posible en la propuesta.</p></div>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6 items-start">
+    <article class="kz-sheet">
+      <header class="kz-sheet__head">
+        <span class="kz-overline"><%= @requirement.category&.name || "Por clasificar" %></span>
+        <span class="text-xs text-ink-muted">Enviado el <%= kz_date(@requirement.submitted_at.to_date) %></span>
+      </header>
+      <dl class="kz-sheet__grid">
+        <div class="kz-sheet__row"><dt>Cantidad</dt><dd><%= @requirement.quantity ? "#{number_with_delimiter(@requirement.quantity, delimiter: ".")} u." : "—" %></dd></div>
+        <% @requirement.template_fields.each do |field| %>
+          <div class="kz-sheet__row <%= "kz-sheet__row--wide" if field["kind"] == "textarea" %>"><dt><%= field["label"] %></dt><dd><%= @requirement.field_value(field["key"]).presence || "—" %></dd></div>
+        <% end %>
+        <div class="kz-sheet__row"><dt>Fecha requerida</dt><dd><%= kz_date(@requirement.required_on) || "—" %></dd></div>
+        <div class="kz-sheet__row"><dt>Presupuesto</dt><dd><%= kz_money(@requirement.budget_cop) %></dd></div>
+        <% if @requirement.description.present? %>
+          <div class="kz-sheet__row kz-sheet__row--wide"><dt>Descripción</dt><dd><%= simple_format(@requirement.description, {}, wrapper_tag: "span") %></dd></div>
+        <% end %>
+      </dl>
+    </article>
+
+    <aside class="grid gap-4">
+      <%= render "shared/requirement_files", requirement: @requirement %>
+
+      <% if @requirement.messages.any? %>
+        <section class="kz-card">
+          <div class="kz-card__header"><h2 class="kz-card__title">Conversación</h2></div>
+          <ol class="kz-card__body grid gap-4">
+            <% @requirement.messages.each do |message| %>
+              <li class="grid gap-1">
+                <span class="kz-overline"><%= message.author_role == "operador" ? "KOVZU" : message.author_name %> · <%= kz_date(message.created_at.to_date) %></span>
+                <p class="text-sm"><%= message.body %></p>
+              </li>
+            <% end %>
+          </ol>
+        </section>
+      <% end %>
+    </aside>
+  </div>
+</div>

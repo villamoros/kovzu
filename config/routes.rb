@@ -7,6 +7,26 @@ Rails.application.routes.draw do
 
   get "dashboard", to: "dashboard#show", as: :dashboard
 
+  # Portal del cliente (paso 3).
+  scope module: :portal do
+    resource :company, path: "empresa", only: %i[new create]
+    resources :requirements, path: "requerimientos", only: %i[index new create show] do
+      post :answer, on: :member, path: "respuesta"
+    end
+    resources :orders, path: "pedidos", only: %i[index show] do
+      resource :proposal, path: "propuesta", only: :show do
+        post :accept, path: "aceptar"
+        post :request_changes, path: "cambios"
+      end
+    end
+    resources :samples, path: "muestras", only: [] do
+      member do
+        post :approve, path: "aprobar"
+        post :reject, path: "rechazar"
+      end
+    end
+  end
+
   # Panel interno del equipo de KOVZU
   namespace :operator, path: "operador" do
     root "dashboard#show"
@@ -21,12 +41,18 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :orders, path: "pedidos", only: :show
+    resources :orders, path: "pedidos", only: :show do
+      resources :proposals, path: "propuestas", only: %i[new create]
+    end
+    resources :quotes, path: "cotizaciones", only: %i[edit update] do
+      post :decline, on: :member, path: "no-cotiza"
+    end
     resources :tech_sheets, path: "fichas", only: %i[edit update] do
       post :ready, on: :member, path: "lista"
     end
     resources :sub_orders, path: "subpedidos", only: [] do
       resource :quote_request, path: "cotizar", only: %i[new create]
+      resources :samples, path: "muestras", only: %i[new create]
     end
 
     resources :workshops, path: "talleres", except: :destroy do

@@ -67,7 +67,13 @@ sheet = labels.sub_orders.first.current_tech_sheet
 sheet.revise!({ "fields" => sheet.fields.merge("tintas" => "CMYK", "presentacion" => "Rollo"),
                 "acceptance_criteria" => "Color dentro de la prueba aprobada; corte ± 1 mm; 5.000 unidades en rollos de 1.000." }, by: operator)
 sheet.mark_ready!(by: operator)
-labels.sub_orders.first.request_quotes!([ workshops[:lito].id ], by: operator)
+labels_quote = labels.sub_orders.first.request_quotes!([ workshops[:lito].id ], by: operator).first
+
+# La cotización llegó por WhatsApp y ya hay propuesta esperando al cliente (HU-07)
+seed_file = ->(name, type) { { io: Rails.root.join("db/seeds/files", name).open, filename: name, content_type: type } }
+labels_quote.record_by_operator!({ price_cop: 1_450_000, lead_days: 9, conditions: "Incluye troquel. Anticipo del 50 %.", valid_until: today + 10 },
+                                 support: seed_file.("cotizacion-whatsapp.png", "image/png"), by: operator)
+Proposal.send_for!(labels_quote.reload, management_fee_cop: 150_000, advance_percent: 50, terms: "Precio antes de IVA. Entrega en Cali.", by: operator)
 
 # Pedidos en curso con hitos (uno atrasado)
 def running_order!(client, category, workshop, title, quantity, status, start_on, operator, fields)
@@ -89,6 +95,11 @@ secondary.milestones.where(kind: %w[anticipo muestra]).find_each { |m| m.complet
 stand = running_order!(clients[:eventos], cats["carpinteria"], workshops[:maderas], "Exhibidor de mesa", 20, "muestra_pendiente", today - 10, operator,
                        { "material" => "MDF 15 mm", "dimensiones" => "600 × 400 × 900 mm", "acabado" => "Laca", "armado" => "Armado" })
 stand.milestones.find_by(kind: "anticipo").complete!(on: today - 9)
+first_sample = stand.register_sample!(kind: "fisica", notes: "Primera muestra en MDF lacado.", photos: [ seed_file.("muestra-exhibidor.png", "image/png") ], by: operator)
+first_sample.update_columns(status: "rechazada", comment: "El logo quedó descentrado y la laca tiene grumos.", decided_by: "Valentina Ortiz",
+                            decided_at: 4.days.ago, created_at: 6.days.ago)
+stand.increment!(:rejection_count)
+stand.register_sample!(kind: "fisica", notes: "Logo centrado y segunda mano de laca.", photos: [ seed_file.("muestra-exhibidor.png", "image/png") ], by: operator)
 
 uniforms = running_order!(clients[:ferre], cats["confeccion"], workshops[:alameda], "Dotación bordada", 60, "inspeccion", today - 14, operator,
                           { "material" => "Dril 100 % algodón", "tallas" => "S: 15, M: 25, L: 15, XL: 5", "marcacion" => "Logo bordado en pecho izquierdo, 8 cm" })

@@ -1,7 +1,7 @@
 <% content_for :title, "#{@order.code} · KOVZU" %>
 
 <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
-  <%= render "operator/shared/page_header", back: [ "Tablero", operator_root_path ],
+  <%= render "kz/page_header", back: [ "Tablero", operator_root_path ],
         overline: "Pedido #{@order.code} · #{@order.client_company.name}", title: @order.title,
         status: kz_status(@order.status) %>
 
@@ -11,6 +11,10 @@
     <%= render "kz/stat", label: "Entrega comprometida", value: kz_date(@order.promised_on) || "—" %>
     <%= render "kz/stat", label: "Atrasos", value: @order.milestones.count(&:late?), tone: @order.milestones.any?(&:late?) ? :danger : :neutral %>
   </div>
+
+  <% if (proposal = @order.current_proposal) %>
+    <%= render "operator/orders/proposal", proposal: %>
+  <% end %>
 
   <% @order.sub_orders.each do |sub_order| %>
     <% sheet = sub_order.current_tech_sheet %>
@@ -39,7 +43,7 @@
             </dl>
             <div class="flex flex-wrap gap-2">
               <%= link_to (sheet.editable? ? "Editar ficha" : "Ver o crear versión nueva"), edit_operator_tech_sheet_path(sheet), class: "kz-btn kz-btn--outline kz-btn--sm" %>
-              <% if (sheet.lista? || sheet.aceptada?) && sub_order.open_quotes.count < SubOrder::MAX_QUOTES && (sub_order.preparacion? || sub_order.cotizando?) %>
+              <% if (sheet.lista? || sheet.aceptada?) && sub_order.quotes.empty? && sub_order.preparacion? %>
                 <%= link_to "Pedir cotizaciones", new_operator_sub_order_quote_request_path(sub_order), class: "kz-btn kz-btn--primary kz-btn--sm" %>
               <% end %>
             </div>
@@ -47,34 +51,25 @@
         </div>
 
         <div class="kz-card__body grid gap-4 content-start border-t border-line lg:border-t-0">
+          <h3 class="kz-overline">Línea de tiempo</h3>
           <% if sub_order.milestones.any? %>
-            <h3 class="kz-overline">Línea de tiempo</h3>
             <% current = sub_order.milestones.reject(&:done?).first %>
             <%= render "kz/timeline", milestones: sub_order.milestones.map { |milestone|
                   { title: milestone.title, state: milestone.timeline_state(current&.id), committed: milestone.committed_on,
-                    actual: milestone.completed_on, by: (milestone.rescheduled? ? "Reprogramado: #{milestone.reschedule_reason}" : nil) } } %>
+                    actual: milestone.completed_on, by: (milestone.rescheduled? ? "Antes #{kz_date(milestone.original_committed_on)}. #{milestone.reschedule_reason}" : nil) } } %>
           <% else %>
-            <h3 class="kz-overline">Cotizaciones</h3>
-            <% if sub_order.quotes.empty? %>
-              <p class="text-sm text-ink-muted">Todavía no se ha pedido cotización. Primero deja la ficha lista.</p>
-            <% else %>
-              <ul class="grid gap-3">
-                <% sub_order.quotes.each do |quote| %>
-                  <li class="flex items-start justify-between gap-3">
-                    <span class="grid gap-0.5">
-                      <%= link_to quote.workshop.name, operator_workshop_path(quote.workshop), class: "kz-link text-sm font-medium" %>
-                      <span class="text-xs text-ink-muted">
-                        <% if quote.price_cop %><%= kz_money(quote.price_cop) %> · <%= quote.lead_days %> días hábiles<% else %>Enlace <%= quote.link_expired? ? "vencido" : "vence #{kz_date(quote.link_expires_at.to_date)}" %><% end %>
-                      </span>
-                    </span>
-                    <%= kz_status(quote.solicitada? && quote.link_expired? ? "vencida" : quote.status, kind: :quote) %>
-                  </li>
-                <% end %>
-              </ul>
-            <% end %>
+            <p class="text-sm text-ink-muted">Los hitos se crean cuando el cliente acepta la propuesta.</p>
           <% end %>
         </div>
       </div>
+
+      <% if sub_order.quotes.any? %>
+        <%= render "operator/orders/quotes", order: @order, sub_order: %>
+      <% end %>
+
+      <% if sub_order.samples.any? || sub_order.can_register_sample? %>
+        <%= render "operator/orders/samples", sub_order: %>
+      <% end %>
     </section>
   <% end %>
 

@@ -1,7 +1,7 @@
 <% content_for :title, "Editar #{@workshop.name} · KOVZU" %>
 
 <div class="mx-auto max-w-3xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
-  <%= render "operator/shared/page_header", back: [ @workshop.name, operator_workshop_path(@workshop) ],
+  <%= render "kz/page_header", back: [ @workshop.name, operator_workshop_path(@workshop) ],
         overline: "Taller", title: "Editar taller", status: kz_status(@workshop.status, kind: :workshop) %>
   <%= render "form", workshop: @workshop, submit: "Guardar cambios", cancel: operator_workshop_path(@workshop) %>
 </div>

@@ -84,10 +84,14 @@ es:
       tech_sheet: Ficha técnica
       quote: Cotización
       milestone: Hito
+      proposal: Propuesta
+      sample: Muestra
     attributes:
       client_company:
         name: Nombre
         nit: NIT
+        segment: Tipo de empresa
+        contact_email: Correo para avisos
       workshop:
         name: Nombre
         nit: NIT
@@ -114,6 +118,8 @@ es:
         required_on: Fecha requerida
         budget_cop: Presupuesto
         channel: Canal
+        description: Descripción
+        files: Archivos
       order:
         code: Código
         client_company: Cliente
@@ -128,6 +134,14 @@ es:
         workshop: Taller
         price_cop: Precio
         lead_days: Plazo
+      proposal:
+        management_fee_cop: Fee de gestión
+        advance_percent: Anticipo
+        lead_days: Plazo
+        workshop_price_cop: Precio del taller
+      sample:
+        photos: La muestra
+        kind: Tipo
       milestone:
         committed_on: Fecha comprometida
         reschedule_reason: Motivo
@@ -148,6 +162,16 @@ es:
       confirmado: Pedido confirmado
     cotizacion:
       solicitada: Cotizaciones solicitadas
+      recibida: Cotización cargada
+      rechazada: El taller no cotiza
+    propuesta:
+      enviada: Propuesta enviada al cliente
+      cambios_solicitados: El cliente pidió cambios
+      cotizacion_vencida: El cliente intentó aceptar con la cotización vencida
+    muestra:
+      registrada: Muestra registrada
+      aprobada: Muestra aprobada por el cliente
+      rechazada: Muestra rechazada por el cliente
     ficha:
       lista: Ficha técnica lista
       nueva_version: Nueva versión de la ficha

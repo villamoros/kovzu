@@ -9,7 +9,7 @@ Base visual de la app, sacada del *Manual de identidad v1.0* (27 oct 2026). Func
 | `app/assets/tailwind/kovzu/tokens.css` | Colores, tipografía, radios y sombras. Modo claro y oscuro. Los expone como utilidades de Tailwind (`bg-surface`, `text-ink-muted`, `border-line`, `bg-accent`…). |
 | `app/assets/tailwind/kovzu/components.css` | Componentes `kz-*`: botón, estado, tarjeta, indicador, tabla, formulario, línea de tiempo, barra superior, ficha técnica, aviso, capacidad. |
 | `app/helpers/kz_helper.rb` | `kz_logo`, `kz_icon`, `kz_capability`, `kz_status`, `kz_glyph`, `kz_date` y el catálogo de estados. |
-| `app/views/kz/` | Parciales: `_head` (fuentes y tema), `_app_header`, `_stat`, `_timeline`, `_flash`. |
+| `app/views/kz/` | Parciales: `_head` (fuentes y tema), `_app_header`, `_page_header` (título, estado y acciones), `_errors` (errores de formulario), `_stat`, `_timeline`, `_flash`. |
 | `app/javascript/controllers/theme_controller.js` | Botón de modo claro/oscuro. Recuerda la elección y, si no hay, sigue al sistema. |
 | `app/javascript/controllers/dismiss_controller.js` | Cierra avisos, a mano o tras unos segundos. |
 | `app/assets/images/kovzu/` | Logo (símbolo, firma corta y firma completa, positivo y negativo) y los 6 iconos de capacidad. |

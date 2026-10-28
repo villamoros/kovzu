@@ -9,6 +9,7 @@ class Order < ApplicationRecord
   belongs_to :requirement, optional: true
   has_many :sub_orders, -> { order(:id) }, dependent: :destroy, inverse_of: :order
   has_many :milestones, through: :sub_orders
+  has_many :proposals, -> { order(:created_at) }, dependent: :destroy
   has_many :audit_events, -> { order(created_at: :desc) }, dependent: :destroy
 
   validates :code, presence: true, uniqueness: true
@@ -31,6 +32,8 @@ class Order < ApplicationRecord
       order
     end
   end
+
+  def current_proposal = proposals.reject(&:reemplazada?).last
 
   def to_param = code
 

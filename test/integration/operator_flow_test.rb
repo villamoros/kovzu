@@ -1,28 +1,12 @@
 require "test_helper"
 
-# Recorre el panel del operador con una sesión de Clerk simulada.
+# Recorre el panel del operador con una sesión de Clerk simulada (ver test_helper).
 class OperatorFlowTest < ActionDispatch::IntegrationTest
-  FakeClerk = Struct.new(:user_id) do
-    def user? = true
-  end
-
-  module FakeClerkSession
-    private
-
-    def clerk
-      (user_id = Thread.current[:kovzu_test_clerk_user_id]) ? FakeClerk.new(user_id) : super
-    end
-  end
-
-  ApplicationController.prepend(FakeClerkSession)
-
   setup do
     @category = create_category
     @operator = User.create!(clerk_id: "user_operador", email: "ana@kovzu.co", first_name: "Ana", role: "operador")
     sign_in_as @operator
   end
-
-  teardown { Thread.current[:kovzu_test_clerk_user_id] = nil }
 
   test "un cliente no entra al panel" do
     sign_in_as User.create!(clerk_id: "user_cliente", email: "laura@aromas.co", role: "cliente")
@@ -109,11 +93,5 @@ class OperatorFlowTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_entity
     assert_select ".kz-alert", text: /Nombre no puede estar en blanco/
-  end
-
-  private
-
-  def sign_in_as(user)
-    Thread.current[:kovzu_test_clerk_user_id] = user.clerk_id
   end
 end

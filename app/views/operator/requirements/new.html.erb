@@ -1,11 +1,11 @@
 <% content_for :title, "Registrar requerimiento · KOVZU" %>
 
 <div class="mx-auto max-w-3xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
-  <%= render "operator/shared/page_header", back: [ "Requerimientos", operator_requirements_path ],
+  <%= render "kz/page_header", back: [ "Requerimientos", operator_requirements_path ],
         overline: "Fase 0 · llegó por WhatsApp o correo", title: "Registrar requerimiento" %>
 
   <%= form_with model: @requirement, url: operator_requirements_path, class: "kz-card kz-card__body grid grid-cols-1 gap-5" do |f| %>
-    <%= render "operator/shared/errors", record: @requirement %>
+    <%= render "kz/errors", record: @requirement %>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div class="kz-field">

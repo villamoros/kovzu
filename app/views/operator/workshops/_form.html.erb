@@ -1,6 +1,6 @@
 <%# locals: (workshop:, submit:, cancel:) -%>
 <%= form_with model: workshop, url: (workshop.persisted? ? operator_workshop_path(workshop) : operator_workshops_path), class: "grid grid-cols-1 gap-6" do |f| %>
-  <%= render "operator/shared/errors", record: workshop %>
+  <%= render "kz/errors", record: workshop %>
 
   <section class="kz-card kz-card__body grid grid-cols-1 gap-5">
     <h2 class="kz-h3">Datos del taller</h2>

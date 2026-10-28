@@ -44,7 +44,7 @@ module KzHelper
 
   # <%= kz_status order.status %>
   # <%= kz_status sub_order.status, kind: :sub_order %>
-  # Tipos: :order, :sub_order, :requirement, :tech_sheet, :quote, :workshop (ver StatusCatalog).
+  # Tipos: :order, :sub_order, :requirement, :tech_sheet, :quote, :proposal, :sample, :workshop (ver StatusCatalog).
   def kz_status(key, kind: :order, label: nil)
     status = StatusCatalog.fetch(kind, key)
     tone_class = "kz-status--#{status[:tone]}" unless status[:tone] == :neutral

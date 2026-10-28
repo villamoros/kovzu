@@ -2,7 +2,8 @@
 <%# items: [["Pedidos", pedidos_path], ["Talleres", talleres_path]] · actions: HTML extra (p. ej. el botón de usuario de Clerk) -%>
 <header class="kz-appbar">
   <%= link_to home_path, class: "kz-appbar__brand", aria: { label: "KOVZU, inicio" } do %>
-    <%= kz_logo :lockup %>
+    <%= kz_logo :lockup, class: "kz-logo--full" %>
+    <%= kz_logo :symbol, class: "kz-logo--compact" %>
   <% end %>
 
   <nav class="kz-appbar__nav" aria-label="Principal">

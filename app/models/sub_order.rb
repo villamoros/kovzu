@@ -13,6 +13,7 @@ class SubOrder < ApplicationRecord
   has_many :tech_sheets, -> { order(version: :desc) }, dependent: :destroy, inverse_of: :sub_order
   has_many :quotes, -> { order(:created_at) }, dependent: :destroy
   has_many :milestones, -> { order(:position) }, dependent: :destroy
+  has_many :samples, -> { order(:number) }, dependent: :destroy
 
   validates :title, presence: true
   validates :quantity, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
@@ -43,6 +44,29 @@ class SubOrder < ApplicationRecord
       AuditEvent.record!(self, "cotizacion.solicitada", actor: by, data: { workshops: workshops.map(&:name) })
       created
     end
+  end
+
+  SAMPLE_STATUSES = %w[asignado anticipo_pendiente muestra_pendiente].freeze
+
+  def current_sample = samples.last
+
+  def can_register_sample? = status.in?(SAMPLE_STATUSES) && !current_sample&.por_revisar?
+
+  # El operador registra la muestra con fotos y el cliente la revisa (HU-09).
+  def register_sample!(kind:, notes:, photos:, by:)
+    raise TransitionError, "Este subpedido no está esperando muestra." unless status.in?(SAMPLE_STATUSES)
+    raise TransitionError, "La muestra anterior sigue esperando respuesta del cliente." if current_sample&.por_revisar?
+
+    sample = transaction do
+      created = samples.create!(number: samples.maximum(:number).to_i + 1, kind:, notes:, photos:, registered_by: by)
+      update!(status: "muestra_pendiente")
+      order.update!(status: "en_curso") if order.confirmado?
+      AuditEvent.record!(self, "muestra.registrada", actor: by, data: { number: created.number })
+      created
+    end
+    ClientMailer.with(order:, headline: "Tu muestra está lista para revisar",
+                      body: "Registramos la muestra #{sample.number} de #{title}. Revísala y apruébala o pide ajustes.").order_update.deliver_later
+    sample
   end
 
   # Hitos estándar desde una fecha de inicio, en días hábiles.

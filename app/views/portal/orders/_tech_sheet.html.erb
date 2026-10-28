@@ -1,0 +1,14 @@
+<%# locals: (sheet:) -%>
+<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+  <% sheet.template_fields.each do |field| %>
+    <% next if sheet.value(field["key"]).blank? %>
+    <dt class="text-ink-muted"><%= field["label"] %></dt>
+    <dd class="m-0"><%= sheet.value(field["key"]) %></dd>
+  <% end %>
+</dl>
+<% if sheet.acceptance_criteria.present? %>
+  <div class="grid gap-1 text-sm">
+    <span class="text-ink-muted">Criterios de aceptación</span>
+    <p><%= sheet.acceptance_criteria %></p>
+  </div>
+<% end %>

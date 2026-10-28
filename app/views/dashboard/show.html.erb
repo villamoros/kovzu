@@ -1,18 +1,94 @@
 <% content_for :title, "Inicio · KOVZU" %>
+<% actions = @proposals.map { |proposal| [ "Revisar la propuesta de #{proposal.order.title}", proposal.order.code, order_proposal_path(proposal.order) ] } +
+             @samples.map { |sample| [ "Revisar la muestra #{sample.number} de #{sample.sub_order.title}", sample.order.code, order_path(sample.order) ] } +
+             @questions.map { |requirement| [ "Responder las preguntas sobre #{requirement.title}", nil, requirement_path(requirement) ] } %>
 
-<section class="mx-auto max-w-6xl px-4 py-12">
-  <p class="kz-overline">Inicio</p>
-  <h1 class="kz-h1 mt-2">Hola, <%= current_user.first_name.presence || current_user.name %></h1>
+<div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", overline: current_company.name,
+        title: "Hola, #{current_user.first_name.presence || current_user.name}",
+        actions: link_to(safe_join([ kz_glyph(:plus), "Nuevo requerimiento" ]), new_requirement_path, class: "kz-btn kz-btn--primary") %>
 
-  <div class="mt-8 grid gap-4 sm:grid-cols-3">
-    <%= render "kz/stat", label: "Pedidos activos", value: "0", tone: :info %>
-    <%= render "kz/stat", label: "En producción", value: "0", tone: :info %>
-    <%= render "kz/stat", label: "Por revisar", value: "0", tone: :warning %>
+  <% if actions.any? %>
+    <section class="kz-card">
+      <div class="kz-card__header">
+        <h2 class="kz-card__title">Esperan tu respuesta</h2>
+        <span class="kz-count"><%= actions.size %></span>
+      </div>
+      <ul class="divide-y divide-line">
+        <% actions.each do |label, code, path| %>
+          <li>
+            <%= link_to path, class: "flex items-center justify-between gap-4 px-6 py-4 hover:bg-surface-muted" do %>
+              <span class="grid gap-0.5 min-w-0">
+                <span class="font-medium"><%= label %></span>
+                <% if code %><span class="kz-code text-xs text-ink-muted"><%= code %></span><% end %>
+              </span>
+              <%= kz_glyph :arrow, size: 18, class: "text-ink-muted shrink-0" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <%= render "kz/stat", label: "Pedidos activos", value: format("%02d", @orders.size), tone: :info %>
+    <%= render "kz/stat", label: "En producción", value: format("%02d", @orders.count { |order| order.sub_orders.any?(&:en_produccion?) }), tone: :info %>
+    <%= render "kz/stat", label: "Por tu respuesta", value: format("%02d", actions.size), tone: actions.any? ? :warning : :neutral %>
   </div>
 
-  <div class="kz-card mt-6 p-6">
-    <h2 class="kz-h3">Aún no tienes pedidos</h2>
-    <p class="mt-1 text-ink-muted">Tu cuenta está lista. Aquí verás cada pedido con su estado y sus hitos.</p>
-    <p class="mt-4 text-sm text-ink-muted">Sesión iniciada como <span class="font-medium text-ink"><%= current_user.email %></span></p>
-  </div>
-</section>
+  <% if @orders.empty? && @requirements.empty? %>
+    <section class="kz-card kz-card__body grid gap-3 justify-items-start">
+      <h2 class="kz-h3">Empieza con un requerimiento</h2>
+      <p class="text-ink-muted max-w-2xl">Cuéntanos qué necesitas fabricar, cuántas unidades y para cuándo. Lo revisamos, cotizamos con talleres verificados y te enviamos una sola propuesta.</p>
+      <%= link_to "Enviar requerimiento", new_requirement_path, class: "kz-btn kz-btn--primary" %>
+    </section>
+  <% end %>
+
+  <% if @orders.any? %>
+    <section class="kz-card">
+      <div class="kz-card__header">
+        <h2 class="kz-card__title">Pedidos en curso</h2>
+        <%= link_to "Ver todos", orders_path, class: "kz-link text-sm" %>
+      </div>
+      <div class="kz-table-wrap">
+        <table class="kz-table">
+          <thead><tr><th>Pedido</th><th>Producto</th><th>Estado</th><th>Próximo hito</th><th class="is-num">Entrega</th></tr></thead>
+          <tbody>
+            <% @orders.each do |order| %>
+              <% next_milestone = order.sub_orders.flat_map(&:milestones).reject(&:done?).min_by(&:committed_on) %>
+              <tr>
+                <td><%= link_to order.code, order_path(order), class: "kz-link kz-code" %></td>
+                <td><%= order.title %></td>
+                <td><%= kz_status order.status %></td>
+                <td class="is-meta">
+                  <% if next_milestone %><%= next_milestone.title %> · <%= kz_date(next_milestone.committed_on) %><% else %>—<% end %>
+                </td>
+                <td class="is-num"><%= kz_date(order.promised_on) || "—" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% end %>
+
+  <% if @requirements.any? %>
+    <section class="kz-card">
+      <div class="kz-card__header">
+        <h2 class="kz-card__title">Requerimientos en revisión</h2>
+        <%= link_to "Ver todos", requirements_path, class: "kz-link text-sm" %>
+      </div>
+      <ul class="divide-y divide-line">
+        <% @requirements.each do |requirement| %>
+          <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+            <span class="grid gap-0.5 min-w-0">
+              <%= link_to requirement.title, requirement_path(requirement), class: "kz-link font-medium" %>
+              <span class="text-xs text-ink-muted">Enviado el <%= kz_date(requirement.submitted_at.to_date) %></span>
+            </span>
+            <%= kz_status requirement.status, kind: :requirement %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+</div>

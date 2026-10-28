@@ -1,0 +1,71 @@
+<% content_for :title, "Propuesta #{@order.code} · KOVZU" %>
+<% sheet = @proposal.tech_sheet %>
+
+<div class="mx-auto max-w-5xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", back: [ "Pedido #{@order.code}", order_path(@order) ], overline: "Propuesta · pedido #{@order.code}",
+        title: @order.title, status: kz_status(@proposal.status, kind: :proposal) %>
+
+  <% if @proposal.enviada? && @proposal.quote_expired? %>
+    <div class="kz-alert kz-alert--warning" role="alert">
+      <%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %>
+      <div><p class="kz-alert__title">La cotización del taller venció</p><p class="kz-alert__body">No se puede aceptar así. Pídele a KOVZU que la renueve o escríbenos tus cambios.</p></div>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6 items-start">
+    <div class="grid gap-6">
+      <section class="kz-card">
+        <div class="kz-card__header"><h2 class="kz-card__title">Lo que pagas</h2></div>
+        <dl class="kz-card__body grid gap-3 text-sm">
+          <div class="flex justify-between gap-6"><dt>Producción · <%= @proposal.workshop.name %></dt><dd class="m-0 tabular-nums"><%= kz_money(@proposal.workshop_price_cop) %></dd></div>
+          <div class="flex justify-between gap-6"><dt>Fee de gestión KOVZU</dt><dd class="m-0 tabular-nums"><%= kz_money(@proposal.management_fee_cop) %></dd></div>
+          <div class="flex justify-between gap-6 border-t border-line pt-3 font-semibold"><dt>Total</dt><dd class="m-0 tabular-nums"><%= kz_money(@proposal.total_cop) %></dd></div>
+        </dl>
+        <div class="kz-card__footer grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+          <div class="grid content-between gap-0.5"><span class="text-ink-muted">Anticipo al taller (<%= @proposal.advance_percent %> %)</span><span class="font-medium tabular-nums"><%= kz_money(@proposal.advance_cop) %></span></div>
+          <div class="grid content-between gap-0.5"><span class="text-ink-muted">Saldo al aprobar la inspección</span><span class="font-medium tabular-nums"><%= kz_money(@proposal.balance_cop) %></span></div>
+          <div class="grid content-between gap-0.5"><span class="text-ink-muted">Plazo</span><span class="font-medium"><%= @proposal.lead_days %> días hábiles · <%= kz_date(@proposal.promised_on) %></span></div>
+        </div>
+      </section>
+
+      <section class="kz-card">
+        <div class="kz-card__header">
+          <h2 class="kz-card__title">Ficha técnica</h2>
+          <span class="text-sm text-ink-muted">Versión <%= format("%02d", sheet.version) %></span>
+        </div>
+        <div class="kz-card__body grid gap-4"><%= render "portal/orders/tech_sheet", sheet: %></div>
+      </section>
+
+      <section class="kz-card kz-card__body grid gap-2 text-sm">
+        <h2 class="kz-h3">Términos</h2>
+        <% if @proposal.terms.present? %><%= simple_format(@proposal.terms) %><% end %>
+        <p class="text-ink-muted">El fee de gestión se causa al aceptar. El anticipo y el saldo se pagan directamente al taller, que es quien factura la producción. El saldo se habilita solo con el acta de inspección aprobada.</p>
+      </section>
+    </div>
+
+    <aside class="grid gap-4 lg:sticky lg:top-6">
+      <% if @proposal.enviada? %>
+        <div class="kz-card kz-card__body grid gap-3">
+          <h2 class="kz-h3">¿Todo bien?</h2>
+          <p class="text-sm text-ink-muted">Al aceptar quedan registradas la fecha, la hora y la versión <%= format("%02d", sheet.version) %> de la ficha. El pedido pasa a confirmado.</p>
+          <%= button_to "Aceptar propuesta", accept_order_proposal_path(@order), class: "kz-btn kz-btn--primary w-full", disabled: @proposal.quote_expired?,
+                form: { data: { turbo_confirm: "¿Aceptas la propuesta por #{kz_money(@proposal.total_cop)}?" } } %>
+        </div>
+        <%= form_with url: request_changes_order_proposal_path(@order), class: "kz-card kz-card__body grid gap-3" do %>
+          <h2 class="kz-h3">Pedir cambios</h2>
+          <div class="kz-field">
+            <label class="kz-label" for="comment">Qué quieres cambiar</label>
+            <%= text_area_tag :comment, nil, class: "kz-textarea", required: true, placeholder: "¿Se puede entregar en 12 días? Necesito el acabado mate." %>
+          </div>
+          <button class="kz-btn kz-btn--outline">Enviar comentarios</button>
+        <% end %>
+      <% else %>
+        <div class="kz-card kz-card__body grid gap-2 text-sm">
+          <h2 class="kz-h3"><%= @proposal.status_label %></h2>
+          <% if @proposal.decided_at %><p class="text-ink-muted">El <%= l(@proposal.decided_at.to_date, format: :long) %> a las <%= @proposal.decided_at.strftime("%H:%M") %>.</p><% end %>
+          <% if @proposal.change_request.present? %><p>"<%= @proposal.change_request %>"</p><% end %>
+        </div>
+      <% end %>
+    </aside>
+  </div>
+</div>

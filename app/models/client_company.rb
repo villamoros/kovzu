@@ -10,5 +10,7 @@ class ClientCompany < ApplicationRecord
   validates :segment, inclusion: { in: SEGMENTS.keys }, allow_blank: true
   validates :nit, uniqueness: true, allow_blank: true
 
+  def notification_emails = (users.pluck(:email) << contact_email).compact_blank.uniq
+
   normalizes :nit, with: ->(nit) { nit.strip.presence }
 end

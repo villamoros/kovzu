@@ -49,6 +49,17 @@ module StatusCatalog
       "no_elegida" => { label: "No elegida", tone: :neutral },
       "vencida"    => { label: "Vencida",    tone: :warning }
     },
+    proposal: {
+      "enviada"             => { label: "Por revisar",        tone: :warning },
+      "aceptada"            => { label: "Aceptada",           tone: :success },
+      "cambios_solicitados" => { label: "Cambios solicitados", tone: :warning },
+      "reemplazada"         => { label: "Reemplazada",        tone: :neutral }
+    },
+    sample: {
+      "por_revisar" => { label: "Por revisar", tone: :warning },
+      "aprobada"    => { label: "Aprobada",    tone: :success },
+      "rechazada"   => { label: "Rechazada",   tone: :danger }
+    },
     workshop: {
       "prospecto"       => { label: "Prospecto",       tone: :neutral },
       "en_verificacion" => { label: "En verificación", tone: :info },

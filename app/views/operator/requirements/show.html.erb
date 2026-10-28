@@ -2,7 +2,7 @@
 <% company = @requirement.client_company %>
 
 <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
-  <%= render "operator/shared/page_header", back: [ "Requerimientos", operator_requirements_path ],
+  <%= render "kz/page_header", back: [ "Requerimientos", operator_requirements_path ],
         overline: "Requerimiento · #{company.name}", title: @requirement.title,
         status: kz_status(@requirement.status, kind: :requirement) %>
 
@@ -26,6 +26,9 @@
           <div class="kz-sheet__row"><dt>Medidas</dt><dd><%= @requirement.dimensions.presence || "—" %></dd></div>
           <div class="kz-sheet__row"><dt>Material</dt><dd><%= @requirement.material.presence || "—" %></dd></div>
           <div class="kz-sheet__row"><dt>Acabado</dt><dd><%= @requirement.finish.presence || "—" %></dd></div>
+          <% @requirement.template_fields.reject { |field| Category::REQUIREMENT_FIELDS.key?(field["key"]) }.each do |field| %>
+            <div class="kz-sheet__row"><dt><%= field["label"] %></dt><dd><%= @requirement.field_value(field["key"]).presence || "—" %></dd></div>
+          <% end %>
           <div class="kz-sheet__row"><dt>Fecha requerida</dt><dd><%= kz_date(@requirement.required_on) || "—" %></dd></div>
           <div class="kz-sheet__row"><dt>Presupuesto</dt><dd><%= kz_money(@requirement.budget_cop) %></dd></div>
           <div class="kz-sheet__row kz-sheet__row--wide"><dt>Descripción</dt><dd><%= simple_format(@requirement.description.presence || "—", {}, wrapper_tag: "span") %></dd></div>
@@ -121,6 +124,8 @@
           <% end %>
         </details>
       <% end %>
+
+      <%= render "shared/requirement_files", requirement: @requirement %>
     </aside>
   </div>
 </div>

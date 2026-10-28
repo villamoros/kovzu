@@ -1,0 +1,30 @@
+<% content_for :title, "Nuevo requerimiento · KOVZU" %>
+
+<div class="mx-auto max-w-5xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", back: [ "Inicio", dashboard_path ], overline: "Nuevo requerimiento · paso 1 de 2", title: "¿Qué necesitas fabricar?" %>
+  <p class="text-ink-muted -mt-2 max-w-2xl">Elige la categoría y te pedimos solo los datos que necesita ese tipo de trabajo.</p>
+
+  <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <% @categories.each do |category| %>
+      <li>
+        <%= link_to new_requirement_path(categoria: category.slug), class: "kz-card kz-card__body grid gap-3 h-full hover:border-ink transition-colors" do %>
+          <%= kz_icon category.slug, size: 32 %>
+          <span class="grid gap-1">
+            <span class="kz-h3"><%= category.name %></span>
+            <span class="text-sm text-ink-muted"><%= category.description %></span>
+          </span>
+          <span class="text-xs text-ink-muted">Desde <%= category.min_lead_days %> días hábiles</span>
+        <% end %>
+      </li>
+    <% end %>
+    <li>
+      <%= link_to new_requirement_path(categoria: "otro"), class: "kz-card kz-card__body grid gap-3 h-full border-dashed hover:border-ink transition-colors" do %>
+        <%= kz_glyph :info, size: 32, class: "text-ink-muted" %>
+        <span class="grid gap-1">
+          <span class="kz-h3">No estoy seguro</span>
+          <span class="text-sm text-ink-muted">Descríbelo con tus palabras y nosotros lo clasificamos.</span>
+        </span>
+      <% end %>
+    </li>
+  </ul>
+</div>

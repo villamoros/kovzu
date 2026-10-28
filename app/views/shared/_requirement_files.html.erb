@@ -1,0 +1,19 @@
+<%# locals: (requirement:) -%>
+<section class="kz-card">
+  <div class="kz-card__header"><h2 class="kz-card__title">Archivos</h2></div>
+  <% if requirement.files.attached? || requirement.reference_links.present? %>
+    <ul class="kz-card__body grid gap-2 text-sm">
+      <% requirement.files.each do |file| %>
+        <li class="flex items-center justify-between gap-3">
+          <%= link_to file.filename.to_s, rails_blob_path(file, disposition: "attachment"), class: "kz-link truncate" %>
+          <span class="text-xs text-ink-muted whitespace-nowrap"><%= number_to_human_size(file.byte_size) %></span>
+        </li>
+      <% end %>
+      <% requirement.reference_links.to_s.split(/\s+/).grep(%r{\Ahttps?://}).each do |url| %>
+        <li><%= link_to url, url, class: "kz-link break-all", target: "_blank", rel: "noopener" %></li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="kz-empty">Sin archivos adjuntos.</p>
+  <% end %>
+</section>

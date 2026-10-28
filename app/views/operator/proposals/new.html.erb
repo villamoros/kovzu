@@ -1,0 +1,44 @@
+<% content_for :title, "Propuesta #{@order.code} · KOVZU" %>
+<% sheet = @quote.sub_order.current_tech_sheet %>
+
+<div class="mx-auto max-w-4xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", back: [ "Pedido #{@order.code}", operator_order_path(@order) ],
+        overline: "Propuesta para #{@order.client_company.name}", title: @order.title %>
+
+  <div class="grid grid-cols-1 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6 items-start">
+    <%= form_with model: @proposal, url: operator_order_proposals_path(@order), class: "kz-card kz-card__body grid grid-cols-1 gap-5" do |f| %>
+      <%= hidden_field_tag "proposal[quote_id]", @quote.id %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="kz-field">
+          <%= f.label :management_fee_cop, "Fee de gestión (COP)", class: "kz-label" %>
+          <%= f.number_field :management_fee_cop, class: "kz-input", min: 1, step: 1000, required: true %>
+          <p class="kz-hint">Fijo por pedido según el tipo: <%= Order::KINDS[@order.kind].downcase %>.</p>
+        </div>
+        <div class="kz-field">
+          <%= f.label :advance_percent, "Anticipo al taller (%)", class: "kz-label" %>
+          <%= f.number_field :advance_percent, class: "kz-input", min: 0, max: 100, required: true %>
+        </div>
+      </div>
+      <div class="kz-field">
+        <%= f.label :terms, class: "kz-label" do %>Términos para el cliente <small>(opcional)</small><% end %>
+        <%= f.text_area :terms, class: "kz-textarea", rows: 4, placeholder: "Precio antes de IVA. Entrega en Cali." %>
+      </div>
+      <div class="flex flex-wrap justify-end gap-2">
+        <%= link_to "Cancelar", operator_order_path(@order), class: "kz-btn kz-btn--ghost" %>
+        <button class="kz-btn kz-btn--primary">Enviar al cliente</button>
+      </div>
+    <% end %>
+
+    <aside class="kz-card kz-card__body grid gap-3 text-sm">
+      <h2 class="kz-h3">Cotización elegida</h2>
+      <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
+        <dt class="text-ink-muted">Taller</dt><dd class="m-0"><%= @quote.workshop.name %></dd>
+        <dt class="text-ink-muted">Precio</dt><dd class="m-0"><%= kz_money(@quote.price_cop) %></dd>
+        <dt class="text-ink-muted">Plazo</dt><dd class="m-0"><%= @quote.lead_days %> días hábiles · <%= kz_date(BusinessDays.add(Date.current, @quote.lead_days.to_i)) %></dd>
+        <dt class="text-ink-muted">Vigencia</dt><dd class="m-0"><%= kz_date(@quote.valid_until) || "Sin fecha" %></dd>
+        <dt class="text-ink-muted">Ficha</dt><dd class="m-0">v<%= format("%02d", sheet.version) %> · <%= sheet.status_label %></dd>
+      </dl>
+      <% if @quote.conditions.present? %><p class="text-ink-muted"><%= @quote.conditions %></p><% end %>
+    </aside>
+  </div>
+</div>

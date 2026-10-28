@@ -10,9 +10,37 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_10_28_100900) do
+ActiveRecord::Schema[8.0].define(version: 2026_10_28_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "active_storage_attachments", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "record_type", null: false
+    t.bigint "record_id", null: false
+    t.bigint "blob_id", null: false
+    t.datetime "created_at", null: false
+    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+  end
+
+  create_table "active_storage_blobs", force: :cascade do |t|
+    t.string "key", null: false
+    t.string "filename", null: false
+    t.string "content_type"
+    t.text "metadata"
+    t.string "service_name", null: false
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.datetime "created_at", null: false
+    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
 
   create_table "approvals", force: :cascade do |t|
     t.string "approvable_type", null: false
@@ -96,10 +124,34 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_100900) do
     t.datetime "delivered_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "fee_accrued_at"
     t.index ["client_company_id"], name: "index_orders_on_client_company_id"
     t.index ["code"], name: "index_orders_on_code", unique: true
     t.index ["requirement_id"], name: "index_orders_on_requirement_id"
     t.index ["status"], name: "index_orders_on_status"
+  end
+
+  create_table "proposals", force: :cascade do |t|
+    t.bigint "order_id", null: false
+    t.bigint "quote_id", null: false
+    t.bigint "tech_sheet_id", null: false
+    t.string "status", default: "enviada", null: false
+    t.decimal "workshop_price_cop", precision: 14, scale: 2, null: false
+    t.decimal "management_fee_cop", precision: 14, scale: 2, null: false
+    t.integer "lead_days", null: false
+    t.integer "advance_percent", default: 50, null: false
+    t.date "promised_on", null: false
+    t.text "terms"
+    t.text "change_request"
+    t.string "sent_by"
+    t.datetime "sent_at"
+    t.datetime "decided_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["order_id"], name: "index_proposals_on_order_id"
+    t.index ["quote_id"], name: "index_proposals_on_quote_id"
+    t.index ["status"], name: "index_proposals_on_status"
+    t.index ["tech_sheet_id"], name: "index_proposals_on_tech_sheet_id"
   end
 
   create_table "quotes", force: :cascade do |t|
@@ -118,6 +170,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_100900) do
     t.datetime "submitted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "chosen_at"
     t.index ["sub_order_id", "workshop_id"], name: "index_quotes_on_sub_order_id_and_workshop_id", unique: true
     t.index ["sub_order_id"], name: "index_quotes_on_sub_order_id"
     t.index ["tech_sheet_id"], name: "index_quotes_on_tech_sheet_id"
@@ -154,9 +207,27 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_100900) do
     t.datetime "qualified_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "reference_links"
     t.index ["category_id"], name: "index_requirements_on_category_id"
     t.index ["client_company_id"], name: "index_requirements_on_client_company_id"
     t.index ["status"], name: "index_requirements_on_status"
+  end
+
+  create_table "samples", force: :cascade do |t|
+    t.bigint "sub_order_id", null: false
+    t.integer "number", null: false
+    t.string "kind", default: "fisica", null: false
+    t.string "status", default: "por_revisar", null: false
+    t.text "notes"
+    t.text "comment"
+    t.string "registered_by"
+    t.string "decided_by"
+    t.datetime "decided_at"
+    t.datetime "reminded_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["sub_order_id", "number"], name: "index_samples_on_sub_order_id_and_number", unique: true
+    t.index ["sub_order_id"], name: "index_samples_on_sub_order_id"
   end
 
   create_table "sub_orders", force: :cascade do |t|
@@ -200,6 +271,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_100900) do
     t.datetime "updated_at", null: false
     t.string "role", default: "cliente", null: false
     t.bigint "client_company_id"
+    t.datetime "data_consent_at"
     t.index ["clerk_id"], name: "index_users_on_clerk_id", unique: true
     t.index ["client_company_id"], name: "index_users_on_client_company_id"
     t.index ["email"], name: "index_users_on_email"
@@ -246,17 +318,23 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_100900) do
     t.index ["status"], name: "index_workshops_on_status"
   end
 
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "approvals", "users"
   add_foreign_key "audit_events", "orders"
   add_foreign_key "milestones", "sub_orders"
   add_foreign_key "orders", "client_companies"
   add_foreign_key "orders", "requirements"
+  add_foreign_key "proposals", "orders"
+  add_foreign_key "proposals", "quotes"
+  add_foreign_key "proposals", "tech_sheets"
   add_foreign_key "quotes", "sub_orders"
   add_foreign_key "quotes", "tech_sheets"
   add_foreign_key "quotes", "workshops"
   add_foreign_key "requirement_messages", "requirements"
   add_foreign_key "requirements", "categories"
   add_foreign_key "requirements", "client_companies"
+  add_foreign_key "samples", "sub_orders"
   add_foreign_key "sub_orders", "categories"
   add_foreign_key "sub_orders", "orders"
   add_foreign_key "sub_orders", "workshops"

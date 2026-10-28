@@ -1,0 +1,21 @@
+<%# locals: (proposal:) -%>
+<section class="kz-card kz-card__body flex flex-wrap items-start justify-between gap-4">
+  <div class="grid gap-1">
+    <div class="flex flex-wrap items-center gap-3">
+      <h2 class="kz-h3">Propuesta</h2>
+      <%= kz_status proposal.status, kind: :proposal, label: (proposal.enviada? ? "Esperando al cliente" : nil) %>
+    </div>
+    <p class="text-sm text-ink-muted">
+      <%= proposal.workshop.name %> · <%= kz_money(proposal.workshop_price_cop) %> + fee <%= kz_money(proposal.management_fee_cop) %> =
+      <strong class="text-ink"><%= kz_money(proposal.total_cop) %></strong> · enviada el <%= kz_date(proposal.sent_at.to_date) %>
+    </p>
+    <% if proposal.cambios_solicitados? %>
+      <p class="text-sm">El cliente pidió: "<%= proposal.change_request %>". Elige otra cotización o vuelve a enviar con ajustes.</p>
+    <% elsif proposal.enviada? && proposal.quote_expired? %>
+      <p class="kz-error">La cotización venció el <%= kz_date(proposal.quote.valid_until) %>. Pide al taller que la renueve antes de que el cliente acepte.</p>
+    <% end %>
+  </div>
+  <% if proposal.aceptada? %>
+    <span class="text-sm text-ink-muted">Fee causado el <%= kz_date(proposal.decided_at.to_date) %></span>
+  <% end %>
+</section>

@@ -1,0 +1,29 @@
+<% content_for :title, "Requerimientos · KOVZU" %>
+
+<div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", overline: current_company.name, title: "Requerimientos",
+        actions: link_to(safe_join([ kz_glyph(:plus), "Nuevo requerimiento" ]), new_requirement_path, class: "kz-btn kz-btn--primary") %>
+
+  <section class="kz-card">
+    <% if @requirements.empty? %>
+      <p class="kz-empty">Todavía no has enviado requerimientos.</p>
+    <% else %>
+      <div class="kz-table-wrap">
+        <table class="kz-table">
+          <thead><tr><th>Requerimiento</th><th>Categoría</th><th>Estado</th><th>Pedido</th><th class="is-num">Enviado</th></tr></thead>
+          <tbody>
+            <% @requirements.each do |requirement| %>
+              <tr>
+                <td><%= link_to requirement.title, requirement_path(requirement), class: "kz-link font-medium" %></td>
+                <td class="is-meta"><%= requirement.category&.name || "Por clasificar" %></td>
+                <td><%= kz_status requirement.status, kind: :requirement %></td>
+                <td><%= requirement.order ? link_to(requirement.order.code, order_path(requirement.order), class: "kz-link kz-code") : "—" %></td>
+                <td class="is-num"><%= kz_date(requirement.submitted_at.to_date) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </section>
+</div>

@@ -4,7 +4,7 @@
 <% waiting_quotes = @dashboard.quotes_waiting.to_a %>
 
 <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-8">
-  <%= render "operator/shared/page_header", overline: "Operación · #{kz_date(Date.current)}", title: "Tablero",
+  <%= render "kz/page_header", overline: "Operación · #{kz_date(Date.current)}", title: "Tablero",
         actions: safe_join([
           link_to(safe_join([ kz_glyph(:plus), "Registrar requerimiento" ]), new_operator_requirement_path, class: "kz-btn kz-btn--primary"),
           link_to("Nuevo taller", new_operator_workshop_path, class: "kz-btn kz-btn--outline")
