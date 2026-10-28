@@ -1,0 +1,447 @@
+/*
+  KOVZU · Componentes base
+  CSS plano sobre los tokens de tokens.css (sin @apply), para que funcione igual
+  dentro de Tailwind y en la vista previa del sistema de diseño.
+  Prefijo kz-. Modificadores con --, partes con __, estados con is-*.
+*/
+
+@layer components {
+  /* ── Tipografía ─────────────────────────────────────────── */
+  .kz-display,
+  .kz-h1,
+  .kz-h2,
+  .kz-h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+  .kz-display { font-size: clamp(2.25rem, 1.5rem + 3vw, 3rem); line-height: 1.06; letter-spacing: -0.025em; }
+  .kz-h1 { font-size: 2rem; line-height: 1.2; letter-spacing: -0.02em; }
+  .kz-h2 { font-size: 1.5rem; line-height: 1.25; letter-spacing: -0.015em; }
+  .kz-h3 { font-size: 1.125rem; line-height: 1.4; letter-spacing: -0.01em; }
+
+  .kz-overline {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  .kz-code {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    color: var(--ink);
+  }
+
+  /* ── Botón ──────────────────────────────────────────────── */
+  .kz-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 2.5rem;
+    padding: 0 1rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 150ms, border-color 150ms, color 150ms, transform 150ms;
+  }
+  .kz-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .kz-btn:active { transform: translateY(1px); }
+  .kz-btn svg { width: 1rem; height: 1rem; flex: none; }
+
+  .kz-btn--primary { background: var(--accent); color: var(--on-accent); }
+  .kz-btn--primary:hover { background: var(--accent-hover); }
+  .kz-btn--secondary { background: var(--brand); color: var(--on-brand); }
+  .kz-btn--secondary:hover { background: var(--brand-hover); }
+  .kz-btn--outline { background: var(--surface); color: var(--ink); border-color: var(--line-strong); }
+  .kz-btn--outline:hover { background: var(--surface-muted); }
+  .kz-btn--ghost { background: transparent; color: var(--ink); }
+  .kz-btn--ghost:hover { background: var(--surface-muted); }
+  .kz-btn--danger { background: var(--danger); color: var(--on-danger); }
+  .kz-btn--danger:hover { filter: brightness(1.08); }
+
+  .kz-btn--sm { height: 2rem; padding: 0 0.75rem; font-size: 0.8125rem; border-radius: var(--radius-sm); }
+  .kz-btn--lg { height: 3rem; padding: 0 1.25rem; font-size: 0.9375rem; }
+  .kz-btn--icon { width: 2.5rem; padding: 0; }
+  .kz-btn--sm.kz-btn--icon { width: 2rem; }
+
+  .kz-btn[disabled],
+  .kz-btn[aria-disabled="true"] { opacity: 0.45; pointer-events: none; }
+
+  /* ── Estado (pedido, subpedido, taller) ─────────────────── */
+  .kz-status {
+    --status-dot: var(--ink-subtle);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: 1.5rem;
+    padding: 0 0.625rem 0 0.5rem;
+    border-radius: 999px;
+    background: var(--chip);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .kz-status::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--status-dot);
+    flex: none;
+  }
+  .kz-status--info { --status-dot: var(--info); }
+  .kz-status--success { --status-dot: var(--success); }
+  .kz-status--warning { --status-dot: var(--warning); }
+  /* Las excepciones (rechazo, reproceso, reclamación) se tiñen completas */
+  .kz-status--danger { --status-dot: var(--danger); background: var(--danger-soft); color: var(--danger); }
+
+  /* ── Tarjeta ────────────────────────────────────────────── */
+  .kz-card {
+    min-width: 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    color: var(--ink);
+  }
+  .kz-card__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    padding: 1.125rem 1.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .kz-card__title { margin: 0; font-family: var(--font-display); font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; }
+  .kz-card__body { padding: 1.5rem; }
+  .kz-card__footer { padding: 1rem 1.5rem; border-top: 1px solid var(--line); }
+
+  /* ── Indicador (tablero) ────────────────────────────────── */
+  .kz-stat {
+    --status-dot: var(--ink-subtle);
+    position: relative;
+    display: grid;
+    gap: 0.5rem;
+    padding: 1rem 1.125rem;
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+    color: var(--ink);
+  }
+  .kz-stat__label { font-family: var(--font-sans); font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--ink-muted); padding-right: 1rem; }
+  .kz-stat__value { font-family: var(--font-display); font-size: 1.75rem; line-height: 1; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .kz-stat__meta { font-size: 0.75rem; line-height: 1rem; color: var(--ink-muted); }
+  .kz-stat::after {
+    content: "";
+    position: absolute;
+    top: 1.125rem;
+    right: 1.125rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--status-dot);
+  }
+  .kz-stat--info { --status-dot: var(--info); }
+  .kz-stat--success { --status-dot: var(--success); }
+  .kz-stat--warning { --status-dot: var(--warning); }
+  .kz-stat--danger { --status-dot: var(--danger); }
+
+  /* ── Tabla ──────────────────────────────────────────────── */
+  .kz-table-wrap { overflow-x: auto; }
+  .kz-table {
+    width: 100%;
+    min-width: 36rem;
+    border-collapse: collapse;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    color: var(--ink);
+  }
+  .kz-table th {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    white-space: nowrap;
+  }
+  .kz-table td { padding: 0.875rem 1rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .kz-table tbody tr:last-child td { border-bottom: 0; }
+  .kz-table tbody tr { transition: background-color 120ms; }
+  .kz-table tbody tr:hover { background: var(--ground); }
+  .kz-table .is-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .kz-table .is-meta { color: var(--ink-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  /* ── Formularios ────────────────────────────────────────── */
+  .kz-field { display: grid; gap: 0.375rem; min-width: 0; }
+  .kz-label { font-family: var(--font-sans); font-size: 0.8125rem; line-height: 1.25rem; font-weight: 500; color: var(--ink); }
+  .kz-label small { font-size: inherit; font-weight: 400; color: var(--ink-muted); }
+
+  .kz-input,
+  .kz-select,
+  .kz-textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    transition: border-color 150ms, box-shadow 150ms;
+  }
+  .kz-input::placeholder,
+  .kz-textarea::placeholder { color: var(--ink-muted); opacity: 1; }
+  .kz-input:hover,
+  .kz-select:hover,
+  .kz-textarea:hover { border-color: var(--ink-muted); }
+  .kz-input:focus,
+  .kz-select:focus,
+  .kz-textarea:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px var(--focus-halo); }
+  .kz-textarea { min-height: 6rem; resize: vertical; }
+  .kz-select { appearance: none; padding-right: 2.25rem; cursor: pointer; }
+  .kz-select-wrap { position: relative; }
+  .kz-select-wrap::after {
+    content: "";
+    position: absolute;
+    right: 0.9rem;
+    top: 50%;
+    width: 0.4rem;
+    height: 0.4rem;
+    border-right: 1.5px solid var(--ink-muted);
+    border-bottom: 1.5px solid var(--ink-muted);
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+  }
+  .kz-hint { margin: 0; font-size: 0.75rem; line-height: 1rem; color: var(--ink-muted); }
+  .kz-error { margin: 0; font-size: 0.75rem; line-height: 1rem; font-weight: 500; color: var(--danger); }
+  .kz-field--error .kz-input,
+  .kz-field--error .kz-select,
+  .kz-field--error .kz-textarea { border-color: var(--danger); }
+
+  /* ── Línea de tiempo del pedido ─────────────────────────── */
+  .kz-timeline { list-style: none; margin: 0; padding: 0; display: grid; }
+  .kz-timeline__item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    gap: 0.75rem;
+    padding-bottom: 1.25rem;
+  }
+  .kz-timeline__item:last-child { padding-bottom: 0; }
+  .kz-timeline__item::before {
+    content: "";
+    position: absolute;
+    left: calc(0.75rem - 1px);
+    top: 1.25rem;
+    bottom: 0;
+    width: 2px;
+    background: var(--line);
+  }
+  .kz-timeline__item:last-child::before { display: none; }
+  .kz-timeline__item.is-done::before { background: var(--ink); }
+  .kz-timeline__marker {
+    position: relative;
+    z-index: 1;
+    box-sizing: border-box;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin: 0.1875rem auto 0;
+    border: 2px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--surface);
+  }
+  .is-done > .kz-timeline__marker { background: var(--ink); border-color: var(--ink); }
+  .is-current > .kz-timeline__marker { background: var(--accent); border-color: var(--on-accent); box-shadow: 0 0 0 4px var(--focus-halo); }
+  .is-late > .kz-timeline__marker { border-color: var(--danger); }
+  .kz-timeline__title { margin: 0; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500; color: var(--ink); }
+  .is-pending .kz-timeline__title { color: var(--ink-muted); }
+  .kz-timeline__meta { margin: 0.125rem 0 0; font-size: 0.75rem; line-height: 1.125rem; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .kz-timeline__meta strong { font-weight: 600; color: var(--ink); }
+  .is-late .kz-timeline__meta strong { color: var(--danger); }
+
+  /* ── Barra superior ─────────────────────────────────────── */
+  .kz-appbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    height: 3.5rem;
+    padding: 0 1.5rem;
+    background: var(--chrome);
+    color: var(--on-chrome);
+    border-bottom: 1px solid var(--line);
+  }
+  .kz-appbar__brand { display: inline-flex; align-items: center; color: var(--on-chrome); text-decoration: none; flex: none; }
+  .kz-appbar__brand .kz-logo { height: 1.5rem; color: inherit; }
+  .kz-appbar__nav { min-width: 0; display: flex; align-items: stretch; gap: 0.25rem; height: 100%; overflow-x: auto; scrollbar-width: none; }
+  .kz-appbar__nav a {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 0.75rem;
+    color: var(--on-chrome-muted);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 150ms;
+  }
+  .kz-appbar__nav a:hover,
+  .kz-appbar__nav a[aria-current="page"] { color: var(--on-chrome); }
+  .kz-appbar__nav a[aria-current="page"]::after {
+    content: "";
+    position: absolute;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+    background: var(--accent);
+  }
+  .kz-appbar__nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--radius-sm); }
+  .kz-appbar__actions { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; flex: none; }
+  .kz-appbar .kz-btn--ghost { color: var(--on-chrome); }
+  .kz-appbar .kz-btn--ghost:hover { background: rgb(245 244 237 / 0.08); }
+  .kz-appbar .kz-btn:focus-visible { outline-color: var(--accent); }
+
+  /* ── Documento: ficha técnica y acta de inspección ──────── */
+  .kz-sheet {
+    min-width: 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    color: var(--ink);
+    overflow: hidden;
+  }
+  .kz-sheet__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .kz-sheet__grid { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+  .kz-sheet__row { display: grid; gap: 0.25rem; padding: 0.875rem 1.5rem; border-bottom: 1px solid var(--line); }
+  .kz-sheet__row--wide { grid-column: 1 / -1; }
+  .kz-sheet__row dt {
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+  .kz-sheet__row dd { margin: 0; font-size: 0.9375rem; line-height: 1.4; color: var(--ink); }
+  .kz-sheet__row dd.is-pending { color: var(--ink-muted); font-style: italic; }
+  .kz-sheet__foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.5rem;
+    padding: 0.875rem 1.5rem;
+    background: var(--ground);
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Aviso ──────────────────────────────────────────────── */
+  .kz-alert {
+    --alert-tone: var(--info);
+    --alert-soft: var(--info-soft);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-radius: var(--radius-md);
+    background: var(--alert-soft);
+    color: var(--ink);
+  }
+  .kz-alert--success { --alert-tone: var(--success); --alert-soft: var(--success-soft); }
+  .kz-alert--warning { --alert-tone: var(--warning); --alert-soft: var(--warning-soft); }
+  .kz-alert--danger { --alert-tone: var(--danger); --alert-soft: var(--danger-soft); }
+  .kz-alert__icon { width: 1.25rem; height: 1.25rem; color: var(--alert-tone); margin-top: 0.0625rem; }
+  .kz-alert__title { margin: 0; font-size: 0.875rem; line-height: 1.375rem; font-weight: 600; color: var(--alert-tone); }
+  .kz-alert__body { margin: 0.125rem 0 0; font-size: 0.875rem; line-height: 1.375rem; color: var(--ink); }
+  .kz-alert__close {
+    display: inline-grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin: -0.25rem -0.375rem 0 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--ink-muted);
+    cursor: pointer;
+  }
+  .kz-alert__close:hover { color: var(--ink); background: var(--alert-soft); filter: brightness(0.96); }
+  .kz-alert__close:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+
+  /* ── Capacidad del taller ───────────────────────────────── */
+  .kz-cap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2rem;
+    padding: 0 0.75rem 0 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .kz-cap .kz-icon { width: 1.25rem; height: 1.25rem; }
+
+  /* ── Iconos y logo ──────────────────────────────────────── */
+  .kz-icon { display: inline-block; flex: none; color: inherit; vertical-align: middle; }
+  .kz-logo { display: inline-block; height: 1.5rem; width: auto; color: var(--ink); vertical-align: middle; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kz-btn,
+    .kz-input,
+    .kz-select,
+    .kz-textarea,
+    .kz-table tbody tr,
+    .kz-appbar__nav a { transition: none; }
+    .kz-btn:active { transform: none; }
+  }
+}

@@ -1,0 +1,143 @@
+<% content_for :title, "Sistema de diseño · KOVZU" %>
+
+<div class="min-h-screen bg-ground text-ink font-sans">
+  <%= render "kz/app_header", items: [ [ "Pedidos", "#pedidos" ], [ "Talleres", "#talleres" ], [ "Inspecciones", "#inspecciones" ], [ "Sistema", design_path ] ] %>
+
+  <main class="mx-auto max-w-6xl px-4 sm:px-6 py-10 grid grid-cols-1 gap-12">
+    <section class="grid gap-3">
+      <span class="kz-overline">KOVZU / Sistema de diseño · v0.1</span>
+      <h1 class="kz-display">Manufactura, coordinada.</h1>
+      <p class="max-w-2xl text-ink-muted">Componentes base de la app, sacados del manual de identidad v1.0. Los datos de esta página son ejemplos.</p>
+    </section>
+
+    <%# Botones %>
+    <section class="grid gap-4">
+      <h2 class="kz-h2">Botones</h2>
+      <div class="flex flex-wrap items-center gap-3">
+        <button class="kz-btn kz-btn--primary"><%= kz_glyph :plus %>Nuevo pedido</button>
+        <button class="kz-btn kz-btn--secondary">Enviar propuesta</button>
+        <button class="kz-btn kz-btn--outline">Ver ficha técnica</button>
+        <button class="kz-btn kz-btn--ghost">Cancelar</button>
+        <button class="kz-btn kz-btn--danger">Rechazar lote</button>
+        <button class="kz-btn kz-btn--primary kz-btn--sm">Aprobar muestra</button>
+        <button class="kz-btn kz-btn--outline" disabled>Sin talleres disponibles</button>
+      </div>
+    </section>
+
+    <%# Tablero %>
+    <section class="grid gap-4" id="pedidos">
+      <h2 class="kz-h2">Pedidos activos</h2>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <%= render "kz/stat", label: "En revisión", value: "04" %>
+        <%= render "kz/stat", label: "En producción", value: "07", tone: :info %>
+        <%= render "kz/stat", label: "Inspección", value: "02", tone: :warning, meta: "1 atrasada" %>
+        <%= render "kz/stat", label: "Entregados", value: "12", tone: :success, meta: "Últimos 30 días" %>
+      </div>
+
+      <div class="kz-card">
+        <div class="kz-card__header">
+          <h3 class="kz-card__title">Pedidos</h3>
+          <button class="kz-btn kz-btn--outline kz-btn--sm">Exportar</button>
+        </div>
+        <div class="kz-table-wrap">
+          <table class="kz-table">
+            <thead>
+              <tr><th>Pedido</th><th>Producto</th><th>Taller</th><th>Estado</th><th class="is-num">Entrega</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="kz-code">KZ-0142</td><td>Empaque secundario</td><td class="is-meta">Cartón Valle</td><td><%= kz_status "en_produccion" %></td><td class="is-num">03 nov</td></tr>
+              <tr><td class="kz-code">KZ-0143</td><td>Etiquetas adhesivas</td><td class="is-meta">Litografía Pance</td><td><%= kz_status "muestra_pendiente" %></td><td class="is-num">04 nov</td></tr>
+              <tr><td class="kz-code">KZ-0144</td><td>Exhibidor de mesa</td><td class="is-meta">Maderas del Sur</td><td><%= kz_status "inspeccion" %></td><td class="is-num">05 nov</td></tr>
+              <tr><td class="kz-code">KZ-0139</td><td>Dotación bordada</td><td class="is-meta">Confecciones Alameda</td><td><%= kz_status "reproceso" %></td><td class="is-num">31 oct</td></tr>
+              <tr><td class="kz-code">KZ-0131</td><td>Caja plegadiza con inserto</td><td class="is-meta">Cartón Valle</td><td><%= kz_status "entregado" %></td><td class="is-num">24 oct</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <%# Línea de tiempo %>
+      <section class="grid gap-4 content-start">
+        <h2 class="kz-h2">Línea de tiempo</h2>
+        <div class="kz-card"><div class="kz-card__body"><%= render "kz/timeline", milestones: @milestones %></div></div>
+      </section>
+
+      <%# Formulario %>
+      <section class="grid gap-4 content-start">
+        <h2 class="kz-h2">Requerimiento</h2>
+        <form class="kz-card kz-card__body grid grid-cols-1 gap-4" onsubmit="return false">
+          <div class="kz-field">
+            <label class="kz-label" for="ds-producto">Qué necesitas fabricar</label>
+            <input class="kz-input" id="ds-producto" placeholder="Ej.: caja plegadiza para 500 frascos">
+          </div>
+          <div class="kz-field">
+            <label class="kz-label" for="ds-categoria">Categoría</label>
+            <div class="kz-select-wrap">
+              <select class="kz-select" id="ds-categoria">
+                <% KzHelper::CAPABILITIES.each do |key, label| %><option value="<%= key %>"><%= label %></option><% end %>
+              </select>
+            </div>
+          </div>
+          <div class="kz-field kz-field--error">
+            <label class="kz-label" for="ds-cantidad">Cantidad <small>(unidades)</small></label>
+            <input class="kz-input" id="ds-cantidad" value="20" aria-invalid="true" aria-describedby="ds-cantidad-error">
+            <p class="kz-error" id="ds-cantidad-error">El mínimo para esta categoría es 100 unidades.</p>
+          </div>
+          <div class="kz-field">
+            <label class="kz-label" for="ds-notas">Notas <small>(opcional)</small></label>
+            <textarea class="kz-textarea" id="ds-notas" placeholder="Materiales, acabados, referencias"></textarea>
+            <p class="kz-hint">Puedes adjuntar fotos y archivos en el siguiente paso.</p>
+          </div>
+          <div class="flex flex-wrap justify-end gap-2">
+            <button type="button" class="kz-btn kz-btn--ghost">Guardar borrador</button>
+            <button class="kz-btn kz-btn--primary">Enviar requerimiento <%= kz_glyph :arrow %></button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <%# Ficha técnica %>
+    <section class="grid gap-4" id="inspecciones">
+      <h2 class="kz-h2">Ficha técnica</h2>
+      <article class="kz-sheet">
+        <header class="kz-sheet__head">
+          <span class="kz-overline">KOVZU / Ficha técnica</span>
+          <%= kz_status "borrador", label: "Borrador" %>
+        </header>
+        <dl class="kz-sheet__grid">
+          <div class="kz-sheet__row"><dt>Pedido</dt><dd class="kz-code">KZ-0001</dd></div>
+          <div class="kz-sheet__row"><dt>Producto</dt><dd>Caja plegadiza con inserto</dd></div>
+          <div class="kz-sheet__row"><dt>Material</dt><dd class="is-pending">Cartón · especificación pendiente</dd></div>
+          <div class="kz-sheet__row"><dt>Dimensiones</dt><dd>120 × 80 × 45 mm</dd></div>
+          <div class="kz-sheet__row"><dt>Acabado</dt><dd>Impresión y laminado según muestra</dd></div>
+          <div class="kz-sheet__row kz-sheet__row--wide"><dt>Criterio de aceptación</dt><dd>Versión de arte aprobada + medidas ± 1 mm</dd></div>
+        </dl>
+        <footer class="kz-sheet__foot"><span>Versión 01</span><span>Aprobación: pendiente</span><span>Responsable: J. Villamoros</span></footer>
+      </article>
+    </section>
+
+    <%# Avisos y capacidades %>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8" id="talleres">
+      <section class="grid gap-3 content-start">
+        <h2 class="kz-h2">Avisos</h2>
+        <div class="kz-alert kz-alert--success" role="status"><%= kz_glyph :check, size: 20, class: "kz-alert__icon" %><div><p class="kz-alert__title">Muestra aprobada</p><p class="kz-alert__body">El taller puede iniciar producción del lote KZ-0142.</p></div><button class="kz-alert__close" aria-label="Cerrar aviso"><%= kz_glyph :close %></button></div>
+        <div class="kz-alert kz-alert--warning" role="status"><%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %><div><p class="kz-alert__title">Muestra atrasada</p><p class="kz-alert__body">Cartón Valle no ha entregado la muestra comprometida para el 27 oct.</p></div></div>
+        <div class="kz-alert kz-alert--danger" role="alert"><%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %><div><p class="kz-alert__title">Lote rechazado en inspección</p><p class="kz-alert__body">3 de 20 unidades fuera de tolerancia. Ver acta de inspección.</p></div></div>
+      </section>
+      <section class="grid gap-3 content-start">
+        <h2 class="kz-h2">Capacidades y talleres</h2>
+        <div class="flex flex-wrap gap-2">
+          <% KzHelper::CAPABILITIES.each_key do |key| %><%= kz_capability key %><% end %>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <% KzHelper::WORKSHOP_STATUSES.each_key do |key| %><%= kz_status key, kind: :workshop %><% end %>
+        </div>
+        <div class="flex items-center gap-6 pt-2">
+          <%= kz_logo :signature, class: "h-14" %>
+          <%= kz_logo :symbol, class: "h-10" %>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>

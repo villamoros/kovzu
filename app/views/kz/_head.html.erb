@@ -1,0 +1,15 @@
+<%# Fuentes de marca y tema antes de pintar (evita el parpadeo). Va dentro de <head>. -%>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..600&family=Sora:wght@500..700&display=swap">
+<meta name="theme-color" content="#0B1F33">
+<%= javascript_tag nonce: true do %>
+  (function () {
+    var theme;
+    try { theme = localStorage.getItem("kz-theme"); } catch (e) {}
+    if (theme !== "light" && theme !== "dark") {
+      theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    document.documentElement.dataset.theme = theme;
+  })();
+<% end %>
