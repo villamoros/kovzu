@@ -61,7 +61,7 @@
     </section>
 
     <% if requirement %>
-      <%= render "shared/requirement_files", requirement: %>
+      <%= render "shared/requirement_files", requirement:, token: @quote.token %>
     <% end %>
 
     <%= form_with model: @quote, url: workshop_quote_path(@quote.token), method: :patch, class: "kz-card kz-card__body grid gap-5" do |f| %>

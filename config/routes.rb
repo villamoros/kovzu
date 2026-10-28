@@ -7,6 +7,13 @@ Rails.application.routes.draw do
 
   get "dashboard", to: "dashboard#show", as: :dashboard
 
+  # Archivos adjuntos, después de revisar el acceso (FileAccess). Redirige a una URL firmada que vence.
+  resources :files, path: "archivos", only: :show
+  scope ActiveStorage.routes_prefix do
+    get "/disk/:encoded_key/*filename" => "active_storage/disk#show", as: :rails_disk_service
+    put "/disk/:encoded_token" => "active_storage/disk#update", as: :update_rails_disk_service
+  end
+
   # HU-05: el taller cotiza desde un enlace, sin cuenta.
   resources :workshop_quotes, path: "cotizar", param: :token, only: %i[show update] do
     member do

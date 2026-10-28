@@ -23,7 +23,7 @@
           <% if payment %>
             <span class="text-ink-muted">
               <%= kz_money(payment.amount_cop) %><% if payment.mismatch? %> · <span class="text-warning">diferencia de <%= kz_money(payment.difference_cop) %> confirmada</span><% end %>
-              · <%= link_to "Soporte", rails_blob_path(payment.support, disposition: "inline"), class: "kz-link", target: "_blank", rel: "noopener" %>
+              · <%= link_to "Soporte", attachment_file_path(payment.support), class: "kz-link", target: "_blank", rel: "noopener" %>
               · <%= payment.registered_by %>
             </span>
             <details>
@@ -45,7 +45,7 @@
       <p class="text-xs text-ink-muted">
         <% voided.each do |payment| %>
           <%= payment.kind_label %> de <%= kz_money(payment.amount_cop) %> anulado por <%= payment.voided_by %>: <%= payment.void_reason %>
-          (<%= link_to "soporte", rails_blob_path(payment.support, disposition: "inline"), class: "kz-link", target: "_blank", rel: "noopener" %>).
+          (<%= link_to "soporte", attachment_file_path(payment.support), class: "kz-link", target: "_blank", rel: "noopener" %>).
         <% end %>
       </p>
     <% end %>

@@ -36,7 +36,7 @@
               <% elsif quote.approvals.any? %>
                 <div class="text-xs text-ink-muted">Cotizó por enlace · aceptó la ficha v<%= quote.tech_sheet.version %></div>
               <% end %>
-              <% if quote.entered_by_operator? && quote.support.attached? %><div class="text-xs"><%= link_to "Soporte", rails_blob_path(quote.support, disposition: "inline"), class: "kz-link", target: "_blank", rel: "noopener" %> · cargada por el operador</div><% end %>
+              <% if quote.entered_by_operator? && quote.support.attached? %><div class="text-xs"><%= link_to "Soporte", attachment_file_path(quote.support), class: "kz-link", target: "_blank", rel: "noopener" %> · cargada por el operador</div><% end %>
             </td>
             <td class="is-meta"><%= quote.workshop.level_label || "—" %></td>
             <td class="is-num"><%= quote.workshop.score || "—" %></td>

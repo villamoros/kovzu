@@ -1,11 +1,11 @@
-<%# locals: (requirement:) -%>
+<%# locals: (requirement:, token: nil) -%>
 <section class="kz-card">
   <div class="kz-card__header"><h2 class="kz-card__title">Archivos</h2></div>
   <% if requirement.files.attached? || requirement.reference_links.present? %>
     <ul class="kz-card__body grid gap-2 text-sm">
       <% requirement.files.each do |file| %>
         <li class="flex items-center justify-between gap-3">
-          <%= link_to file.filename.to_s, rails_blob_path(file, disposition: "attachment"), class: "kz-link truncate" %>
+          <%= link_to file.filename.to_s, attachment_file_path(file, disposition: "attachment", token:), class: "kz-link truncate" %>
           <span class="text-xs text-ink-muted whitespace-nowrap"><%= number_to_human_size(file.byte_size) %></span>
         </li>
       <% end %>

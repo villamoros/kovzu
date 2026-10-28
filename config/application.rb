@@ -25,6 +25,10 @@ module Kovzu
     config.time_zone = "Bogota"
     config.i18n.default_locale = :es
     config.i18n.available_locales = [ :es, :en ]
+
+    # Los archivos no tienen enlaces permanentes: se piden por FilesController, que revisa el acceso.
+    # En config/routes.rb quedan solo las rutas del disco local que usan desarrollo y pruebas.
+    config.active_storage.draw_routes = false
     # config.eager_load_paths << Rails.root.join("extras")
   end
 end
