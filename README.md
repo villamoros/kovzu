@@ -58,3 +58,5 @@ Salen por Resend (SMTP) con `RESEND_API_KEY`. En desarrollo solo se envían si a
 ## Producción
 
 La app lee `DATABASE_URL` (Neon o Supabase). Solid Cache, Queue y Cable comparten esa misma base, así que basta una base gratuita. Variables necesarias: `DATABASE_URL`, `RAILS_MASTER_KEY`, `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `RESEND_API_KEY`, `MAIL_FROM` (con un dominio verificado en Resend) y `APP_HOST` (el dominio público, para los enlaces de los correos).
+
+Los archivos (diseños, fotos, actas y soportes) van a un bucket privado de Cloudflare R2, porque el disco del servidor se borra en cada despliegue. Crea el bucket y un token de API con permiso de lectura y escritura sobre él, y define `R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY_ID` y `R2_SECRET_ACCESS_KEY`. Ningún archivo tiene un enlace permanente: se piden en `/archivos/:id`, que revisa quién los pide (`FileAccess`) y redirige a una URL firmada que vence en 5 minutos.

@@ -66,7 +66,7 @@
               <% if item.photos.attached? %>
                 <div class="flex flex-wrap gap-2 pt-1">
                   <% item.photos.each do |photo| %>
-                    <%= image_tag rails_blob_path(photo, disposition: "inline"), alt: item.label, class: "size-16 rounded-lg object-cover border border-line", loading: "lazy" %>
+                    <%= image_tag attachment_file_path(photo), alt: item.label, class: "size-16 rounded-lg object-cover border border-line", loading: "lazy" %>
                   <% end %>
                 </div>
               <% end %>

@@ -10,7 +10,7 @@
         <h2 class="kz-h3"><%= inspection.result_label %></h2>
       </div>
       <% if inspection.report.attached? %>
-        <%= link_to "Descargar acta PDF", rails_blob_path(inspection.report, disposition: "attachment"), class: "kz-btn kz-btn--outline kz-btn--sm" %>
+        <%= link_to "Descargar acta PDF", attachment_file_path(inspection.report, disposition: "attachment"), class: "kz-btn kz-btn--outline kz-btn--sm" %>
       <% else %>
         <span class="text-xs text-ink-muted">Generando el PDF…</span>
       <% end %>
@@ -64,8 +64,8 @@
       <h3 class="kz-overline">Fotos</h3>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <% photos.each do |item, photo| %>
-          <%= link_to rails_blob_path(photo, disposition: "inline"), target: "_blank", rel: "noopener", class: "grid gap-1 text-xs text-ink-muted" do %>
-            <%= image_tag rails_blob_path(photo, disposition: "inline"), alt: item.label, class: "aspect-square w-full rounded-lg object-cover border border-line bg-ground", loading: "lazy" %>
+          <%= link_to attachment_file_path(photo), target: "_blank", rel: "noopener", class: "grid gap-1 text-xs text-ink-muted" do %>
+            <%= image_tag attachment_file_path(photo), alt: item.label, class: "aspect-square w-full rounded-lg object-cover border border-line bg-ground", loading: "lazy" %>
             <span class="truncate"><%= item.label %></span>
           <% end %>
         <% end %>
