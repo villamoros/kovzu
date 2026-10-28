@@ -1,0 +1,98 @@
+<% content_for :title, "Ficha técnica #{@order.code} · KOVZU" %>
+<% requirement = @order.requirement %>
+
+<div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", back: [ "Pedido #{@order.code}", operator_order_path(@order) ],
+        overline: "Ficha técnica · #{@sub_order.category.name} · versión #{format("%02d", @tech_sheet.version)}",
+        title: @sub_order.title, status: kz_status(@tech_sheet.status, kind: :tech_sheet) %>
+
+  <% if @tech_sheet.aceptada? %>
+    <div class="kz-alert kz-alert--warning" role="status">
+      <%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %>
+      <div><p class="kz-alert__title">Esta versión ya fue aceptada</p><p class="kz-alert__body">Si guardas cambios se crea la versión <%= format("%02d", @tech_sheet.version + 1) %>, que necesita nueva aceptación del cliente y del taller.</p></div>
+    </div>
+  <% elsif @tech_sheet.reemplazada? %>
+    <div class="kz-alert" role="status">
+      <%= kz_glyph :info, size: 20, class: "kz-alert__icon" %>
+      <div><p class="kz-alert__body">Esta versión fue reemplazada y es de solo lectura. <%= link_to "Ir a la versión actual", edit_operator_tech_sheet_path(@sub_order.current_tech_sheet), class: "kz-link" %>.</p></div>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6 items-start">
+    <%= form_with model: @tech_sheet, url: operator_tech_sheet_path(@tech_sheet), method: :patch, class: "kz-card" do |f| %>
+      <div class="kz-card__body grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <% @tech_sheet.template_fields.each do |field| %>
+          <% name = "tech_sheet[fields][#{field["key"]}]" %>
+          <% id = "tech_sheet_fields_#{field["key"]}" %>
+          <% value = @tech_sheet.value(field["key"]) %>
+          <div class="kz-field <%= "sm:col-span-2" if field["kind"] == "textarea" %>">
+            <label class="kz-label" for="<%= id %>"><%= field["label"] %><% unless field["required"] %> <small>(opcional)</small><% end %></label>
+            <% case field["kind"] %>
+            <% when "textarea" %>
+              <%= text_area_tag name, value, id:, class: "kz-textarea", disabled: @tech_sheet.reemplazada? %>
+            <% when "select" %>
+              <div class="kz-select-wrap"><%= select_tag name, options_for_select(Array(field["options"]) | [ value ].compact, value), id:, include_blank: "Elige una opción", class: "kz-select", disabled: @tech_sheet.reemplazada? %></div>
+            <% when "number" %>
+              <%= number_field_tag name, value, id:, class: "kz-input", min: 1, disabled: @tech_sheet.reemplazada? %>
+            <% else %>
+              <%= text_field_tag name, value, id:, class: "kz-input", disabled: @tech_sheet.reemplazada? %>
+            <% end %>
+          </div>
+        <% end %>
+        <div class="kz-field sm:col-span-2">
+          <%= f.label :acceptance_criteria, "Criterios de aceptación", class: "kz-label" %>
+          <%= f.text_area :acceptance_criteria, class: "kz-textarea", rows: 4, disabled: @tech_sheet.reemplazada?,
+                placeholder: "Versión de arte aprobada; medidas internas ± 1 mm; 2.000 unidades planas en cajas de 100." %>
+          <p class="kz-hint">Qué revisa la inspección para aprobar el lote. Sin criterios la ficha no puede quedar lista.</p>
+        </div>
+      </div>
+      <% unless @tech_sheet.reemplazada? %>
+        <div class="kz-card__footer flex flex-wrap justify-end gap-2">
+          <button class="kz-btn <%= @tech_sheet.borrador? ? "kz-btn--outline" : "kz-btn--primary" %>"><%= @tech_sheet.aceptada? ? "Crear versión #{format("%02d", @tech_sheet.version + 1)}" : "Guardar" %></button>
+        </div>
+      <% end %>
+    <% end %>
+
+    <aside class="grid gap-4">
+      <% if @tech_sheet.borrador? %>
+        <div class="kz-card kz-card__body grid gap-3">
+          <h2 class="kz-h3">¿Lista para cotizar?</h2>
+          <% if (missing = @tech_sheet.missing_required_fields).any? || @tech_sheet.acceptance_criteria.blank? %>
+            <p class="text-sm text-ink-muted">Falta: <%= (missing + (@tech_sheet.acceptance_criteria.blank? ? [ "criterios de aceptación" ] : [])).to_sentence %>. Guarda los cambios y vuelve aquí.</p>
+          <% else %>
+            <p class="text-sm text-ink-muted">Al marcarla lista eliges los talleres que van a cotizar.</p>
+          <% end %>
+          <%= button_to "Marcar como lista", ready_operator_tech_sheet_path(@tech_sheet), class: "kz-btn kz-btn--primary w-full" %>
+        </div>
+      <% elsif @tech_sheet.lista? %>
+        <div class="kz-card kz-card__body grid gap-3">
+          <h2 class="kz-h3">Ficha lista</h2>
+          <p class="text-sm text-ink-muted">Si la editas vuelve a borrador.</p>
+          <%= link_to "Pedir cotizaciones", new_operator_sub_order_quote_request_path(@sub_order), class: "kz-btn kz-btn--primary" %>
+        </div>
+      <% end %>
+
+      <% if requirement %>
+        <section class="kz-card kz-card__body grid gap-3">
+          <h2 class="kz-overline">Lo que pidió el cliente</h2>
+          <p class="text-sm font-medium"><%= requirement.title %></p>
+          <% if requirement.description.present? %><p class="text-sm text-ink-muted"><%= requirement.description %></p><% end %>
+          <% requirement.messages.each do |message| %>
+            <p class="text-xs text-ink-muted"><strong class="text-ink"><%= message.author_role == "operador" ? "Pregunta" : "Respuesta" %>:</strong> <%= message.body %></p>
+          <% end %>
+        </section>
+      <% end %>
+
+      <% if @sub_order.tech_sheets.size > 1 %>
+        <section class="kz-card kz-card__body grid gap-2">
+          <h2 class="kz-overline">Versiones</h2>
+          <% @sub_order.tech_sheets.each do |version| %>
+            <%= link_to edit_operator_tech_sheet_path(version), class: "flex items-center justify-between gap-2 text-sm" do %>
+              <span class="kz-code">v<%= format("%02d", version.version) %></span><%= kz_status version.status, kind: :tech_sheet %>
+            <% end %>
+          <% end %>
+        </section>
+      <% end %>
+    </aside>
+  </div>
+</div>

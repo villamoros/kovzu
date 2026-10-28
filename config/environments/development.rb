@@ -40,6 +40,17 @@ Rails.application.configure do
   # Set localhost to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
 
+  # Real email through Resend only with an API key and a test inbox: every message is redirected
+  # to DEV_MAIL_TO so the demo clients in the seeds never get mail.
+  if ENV["RESEND_API_KEY"].present? && ENV["DEV_MAIL_TO"].present?
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.smtp_settings = {
+      address: "smtp.resend.com", port: 465, tls: true, user_name: "resend", password: ENV["RESEND_API_KEY"], authentication: :plain
+    }
+    config.action_mailer.interceptors = %w[DevRecipientInterceptor]
+    config.action_mailer.raise_delivery_errors = true
+  end
+
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
 

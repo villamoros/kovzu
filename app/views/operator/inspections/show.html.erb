@@ -1,0 +1,111 @@
+<% content_for :title, "Inspección #{@inspection.number} · #{@inspection.order.code} · KOVZU" %>
+<% sub_order = @inspection.sub_order %>
+
+<div class="mx-auto max-w-3xl px-4 sm:px-6 py-6 grid grid-cols-1 gap-5">
+  <%= render "kz/page_header", back: [ "Pedido #{@inspection.order.code}", operator_order_path(@inspection.order) ],
+        overline: "Inspección #{@inspection.number}#{" · reinspección" if @inspection.reinspection?} · #{sub_order.workshop&.name}",
+        title: sub_order.title,
+        status: (@inspection.cerrada? ? kz_status(@inspection.result, kind: :inspection_result) : kz_status(@inspection.status, kind: :inspection)) %>
+
+  <% if @inspection.cerrada? %>
+    <%= render "shared/inspection_report", inspection: @inspection %>
+  <% else %>
+    <section class="kz-card kz-card__body grid gap-3">
+      <div class="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+        <p><span class="kz-display text-3xl"><%= @inspection.sample_size %></span> <span class="text-sm text-ink-muted">unidades a revisar</span></p>
+        <p class="text-sm text-ink-muted">Lote de <%= number_with_delimiter(@inspection.lot_size, delimiter: ".") %> · tabla fija ISO 2859-1, nivel II (lote <%= SamplingPlan.range_label(@inspection.lot_size) %>)</p>
+      </div>
+      <% if @inspection.criteria.present? %>
+        <div class="grid gap-1 text-sm">
+          <span class="kz-overline">Criterios de la ficha v<%= format("%02d", @inspection.tech_sheet_version) %></span>
+          <p><%= @inspection.criteria %></p>
+        </div>
+      <% end %>
+      <% if @inspection.reinspection_of %>
+        <p class="text-sm text-ink-muted">Reinspección de la <%= link_to "inspección #{@inspection.reinspection_of.number}", operator_inspection_path(@inspection.reinspection_of), class: "kz-link" %>: revisa lo que salió no conforme.</p>
+      <% end %>
+    </section>
+
+    <%= form_with url: progress_operator_inspection_path(@inspection), method: :post, multipart: true, class: "grid gap-4" do %>
+      <ol class="grid gap-3">
+        <% @inspection.items.each_with_index do |item, index| %>
+          <li class="kz-card kz-card__body grid gap-3 group">
+            <div class="flex items-start justify-between gap-3">
+              <div class="grid gap-0.5">
+                <span class="font-medium"><span class="text-ink-muted tabular-nums"><%= index + 1 %>.</span> <%= item.label %></span>
+                <% if item.tolerance.present? %><span class="text-xs text-ink-muted">Tolerancia <%= item.tolerance %></span><% end %>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Resultado de <%= item.label %>">
+              <% InspectionItem::RESULTS.each do |value, label| %>
+                <label class="kz-btn kz-btn--outline justify-center <%= value == "conforme" ? "has-[:checked]:bg-success-soft has-[:checked]:border-success" : "has-[:checked]:bg-danger-soft has-[:checked]:border-danger" %>">
+                  <%= radio_button_tag "items[#{item.id}][result]", value, item.result == value, class: "sr-only" %>
+                  <%= label %>
+                </label>
+              <% end %>
+            </div>
+            <div class="kz-field">
+              <label class="kz-label" for="measurement_<%= item.id %>">Medición <small>(opcional)</small></label>
+              <%= text_field_tag "items[#{item.id}][measurement]", item.measurement, id: "measurement_#{item.id}", class: "kz-input", placeholder: "120,3 mm" %>
+            </div>
+            <div class="hidden group-has-[input[value=no_conforme]:checked]:grid gap-3">
+              <div class="kz-field">
+                <label class="kz-label" for="severity_<%= item.id %>">Severidad</label>
+                <div class="kz-select-wrap">
+                  <%= select_tag "items[#{item.id}][severity]", options_for_select(InspectionItem::SEVERITIES.invert, item.severity), include_blank: "Elige", id: "severity_#{item.id}", class: "kz-select" %>
+                </div>
+              </div>
+              <div class="kz-field">
+                <label class="kz-label" for="note_<%= item.id %>">Qué encontraste</label>
+                <%= text_area_tag "items[#{item.id}][note]", item.note, id: "note_#{item.id}", class: "kz-textarea", rows: 2 %>
+              </div>
+            </div>
+            <div class="kz-field">
+              <label class="kz-label" for="photos_<%= item.id %>">Fotos <small>(obligatorias si no es conforme)</small></label>
+              <%= file_field_tag "photos[#{item.id}][]", id: "photos_#{item.id}", multiple: true, accept: "image/*", capture: "environment", class: "kz-input py-2" %>
+              <% if item.photos.attached? %>
+                <div class="flex flex-wrap gap-2 pt-1">
+                  <% item.photos.each do |photo| %>
+                    <%= image_tag rails_blob_path(photo, disposition: "inline"), alt: item.label, class: "size-16 rounded-lg object-cover border border-line", loading: "lazy" %>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </li>
+        <% end %>
+      </ol>
+
+      <section class="kz-card kz-card__body grid gap-4">
+        <div class="kz-field">
+          <label class="kz-label" for="notes">Observaciones generales <small>(opcional)</small></label>
+          <%= text_area_tag :notes, @inspection.notes, class: "kz-textarea", rows: 3 %>
+        </div>
+        <button class="kz-btn kz-btn--outline w-full">Guardar avance</button>
+      </section>
+
+      <section class="kz-card kz-card__body grid gap-4 group">
+        <h2 class="kz-h3">Cerrar inspección</h2>
+        <p class="text-sm text-ink-muted">Al cerrar, el resultado queda inmutable con tu nombre, la fecha y la hora, y el acta se envía al cliente y al taller.</p>
+        <div class="grid gap-2" role="radiogroup" aria-label="Resultado">
+          <% StatusCatalog::STATUSES[:inspection_result].each do |value, status| %>
+            <label class="kz-check rounded-xl border border-line px-4 py-3 has-[:checked]:border-ink">
+              <%= radio_button_tag :result, value, false %>
+              <span class="grid gap-0.5">
+                <span class="font-medium"><%= status[:label] %></span>
+                <span class="text-xs text-ink-muted"><%= { "aprobado" => "Todo conforme. Se habilita el saldo.",
+                                                          "aprobado_con_desviacion" => "No conformidad menor. El cliente decide si la acepta.",
+                                                          "rechazado" => "Despacho y saldo bloqueados. El taller reprocesa a su costo." }[value] %></span>
+              </span>
+            </label>
+          <% end %>
+        </div>
+        <div class="kz-field hidden group-has-[input[value=rechazado]:checked]:grid">
+          <label class="kz-label" for="rework_due_on">Plazo de reproceso</label>
+          <%= date_field_tag :rework_due_on, @inspection.suggested_rework_due_on, min: Date.current + 1, class: "kz-input" %>
+        </div>
+        <button class="kz-btn kz-btn--primary kz-btn--lg w-full" formaction="<%= close_operator_inspection_path(@inspection) %>"
+                data-turbo-confirm="¿Cerrar la inspección? Después no se puede modificar.">Cerrar inspección</button>
+      </section>
+    <% end %>
+  <% end %>
+</div>

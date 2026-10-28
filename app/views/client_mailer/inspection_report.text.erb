@@ -1,0 +1,14 @@
+Acta de inspección: <%= @inspection.result_label.downcase %>
+
+Pedido <%= @order.code %> · <%= @inspection.sub_order.title %>
+<% case @inspection.result %>
+<% when "aprobado" %>
+Revisamos <%= @inspection.sample_size %> de <%= number_with_delimiter(@inspection.lot_size) %> unidades y el lote cumple la ficha técnica.
+<% when "aprobado_con_desviacion" %>
+El lote tiene una desviación menor. Revisa el acta y dinos si la aceptas: el saldo se habilita con tu respuesta.
+<% else %>
+El lote no cumple la ficha técnica. Despacho y saldo quedan en pausa mientras el taller reprocesa a su costo. Reinspección prevista: <%= l(@inspection.rework_due_on, format: :long) %>.
+<% end %>
+Adjuntamos el acta en PDF con el muestreo, las mediciones y las fotos.
+
+Ver el acta: <%= @url %>

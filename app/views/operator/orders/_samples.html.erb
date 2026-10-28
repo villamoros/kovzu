@@ -1,0 +1,29 @@
+<%# locals: (sub_order:) -%>
+<div class="border-t border-line kz-card__body grid gap-4">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h3 class="kz-overline">Muestras<% if sub_order.rejection_count.positive? %> · <%= sub_order.rejection_count %> rechazo<%= "s" unless sub_order.rejection_count == 1 %><% end %></h3>
+    <% if sub_order.can_register_sample? %>
+      <%= link_to "Registrar muestra", new_operator_sub_order_sample_path(sub_order), class: "kz-btn kz-btn--primary kz-btn--sm" %>
+    <% end %>
+  </div>
+  <% if sub_order.samples.empty? %>
+    <p class="text-sm text-ink-muted">Cuando el taller entregue la muestra, regístrala con fotos para que el cliente la apruebe.</p>
+  <% else %>
+    <ul class="grid gap-3 text-sm">
+      <% sub_order.samples.reverse_each do |sample| %>
+        <li class="flex flex-wrap items-start justify-between gap-3">
+          <span class="grid gap-0.5">
+            <span class="font-medium">Muestra <%= sample.number %> · <%= Sample::KINDS[sample.kind] %> · <%= sample.photos.size %> foto<%= "s" unless sample.photos.size == 1 %></span>
+            <span class="text-ink-muted">
+              Registrada el <%= kz_date(sample.created_at.to_date) %> por <%= sample.registered_by %>
+              <% if sample.decided_by %> · <%= sample.status_label.downcase %> por <%= sample.decided_by %><% end %>
+              <% if sample.overdue? %> · <span class="text-danger">sin respuesta hace <%= sample.waiting_business_days %> días hábiles</span><% end %>
+            </span>
+            <% if sample.comment.present? %><span>"<%= sample.comment %>"</span><% end %>
+          </span>
+          <%= kz_status sample.status, kind: :sample %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

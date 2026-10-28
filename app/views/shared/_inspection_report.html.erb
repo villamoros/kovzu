@@ -1,0 +1,93 @@
+<%# locals: (inspection:) -%>
+<%# HU-13: acta cerrada, igual para operador y cliente. El PDF es la versión que se envía por correo. -%>
+<% sub_order = inspection.sub_order %>
+<% tone = inspection.result_tone %>
+<section class="kz-card overflow-hidden">
+  <div class="kz-card__body grid gap-3 <%= { success: "bg-success-soft", warning: "bg-warning-soft", danger: "bg-danger-soft" }[tone] %>">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <%= kz_glyph(tone == :success ? :check : :alert, size: 22, class: { success: "text-success", warning: "text-warning", danger: "text-danger" }[tone]) %>
+        <h2 class="kz-h3"><%= inspection.result_label %></h2>
+      </div>
+      <% if inspection.report.attached? %>
+        <%= link_to "Descargar acta PDF", rails_blob_path(inspection.report, disposition: "attachment"), class: "kz-btn kz-btn--outline kz-btn--sm" %>
+      <% else %>
+        <span class="text-xs text-ink-muted">Generando el PDF…</span>
+      <% end %>
+    </div>
+    <p class="text-sm">
+      Cerrada el <%= l(inspection.closed_at, format: :long) %> por <%= inspection.closed_by %>.
+      <% if inspection.rework_due_on %> Reproceso a cargo del taller hasta el <strong><%= l(inspection.rework_due_on, format: :long) %></strong>.<% end %>
+    </p>
+  </div>
+
+  <div class="grid grid-cols-2 sm:grid-cols-4 border-t border-line">
+    <% [ [ "Lote", "#{number_with_delimiter(inspection.lot_size, delimiter: ".")} u." ],
+         [ "Muestra revisada", "#{number_with_delimiter(inspection.sample_size, delimiter: ".")} u." ],
+         [ "Ficha", inspection.tech_sheet_version ? "v#{format("%02d", inspection.tech_sheet_version)}" : "—" ],
+         [ "Taller", sub_order.workshop&.name || "—" ] ].each do |label, value| %>
+      <div class="px-6 py-4 grid gap-0.5 border-line odd:border-r sm:border-r sm:last:border-r-0">
+        <span class="kz-overline"><%= label %></span>
+        <span class="text-sm font-medium"><%= value %></span>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="kz-table-wrap border-t border-line">
+    <table class="kz-table">
+      <thead><tr><th>Ítem</th><th>Tolerancia</th><th>Medición</th><th>Resultado</th></tr></thead>
+      <tbody>
+        <% inspection.items.each do |item| %>
+          <tr>
+            <td>
+              <span class="font-medium"><%= item.label %></span>
+              <% if item.note.present? %><div class="text-xs text-ink-muted max-w-72"><%= item.note %></div><% end %>
+            </td>
+            <td class="is-meta"><%= item.tolerance.presence || "—" %></td>
+            <td><%= item.measurement.presence || "—" %></td>
+            <td class="whitespace-nowrap">
+              <% if item.no_conforme? %>
+                <span class="kz-status kz-status--danger">No conforme · <%= item.severity_label %></span>
+              <% else %>
+                <span class="kz-status kz-status--success">Conforme</span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% photos = inspection.items.flat_map { |item| item.photos.map { |photo| [ item, photo ] } } %>
+  <% if photos.any? %>
+    <div class="kz-card__body border-t border-line grid gap-3">
+      <h3 class="kz-overline">Fotos</h3>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <% photos.each do |item, photo| %>
+          <%= link_to rails_blob_path(photo, disposition: "inline"), target: "_blank", rel: "noopener", class: "grid gap-1 text-xs text-ink-muted" do %>
+            <%= image_tag rails_blob_path(photo, disposition: "inline"), alt: item.label, class: "aspect-square w-full rounded-lg object-cover border border-line bg-ground", loading: "lazy" %>
+            <span class="truncate"><%= item.label %></span>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if inspection.criteria.present? || inspection.notes.present? %>
+    <div class="kz-card__body border-t border-line grid gap-3 text-sm">
+      <% if inspection.criteria.present? %>
+        <div class="grid gap-1"><span class="kz-overline">Criterios de aceptación</span><p><%= inspection.criteria %></p></div>
+      <% end %>
+      <% if inspection.notes.present? %>
+        <div class="grid gap-1"><span class="kz-overline">Observaciones</span><p><%= inspection.notes %></p></div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if inspection.deviation_status.in?(%w[aceptada rechazada]) %>
+    <div class="kz-card__body border-t border-line text-sm">
+      Desviación <strong><%= inspection.deviation_status %></strong> por <%= inspection.deviation_decided_by %> el <%= kz_date(inspection.deviation_decided_at.to_date) %>.
+      <% if inspection.deviation_comment.present? %><span class="text-ink-muted">"<%= inspection.deviation_comment %>"</span><% end %>
+    </div>
+  <% end %>
+</section>

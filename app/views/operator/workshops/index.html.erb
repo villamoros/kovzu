@@ -1,0 +1,58 @@
+<% content_for :title, "Talleres · KOVZU" %>
+
+<div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", overline: "Red de talleres", title: "Talleres",
+        actions: link_to(safe_join([ kz_glyph(:plus), "Registrar taller" ]), new_operator_workshop_path, class: "kz-btn kz-btn--primary") %>
+
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <nav class="kz-tabs" aria-label="Estado">
+      <%= link_to operator_workshops_path(category_id: @category&.id), aria: { current: (@status.nil? ? "page" : nil) } do %>
+        Todos <span class="kz-count"><%= @counts.values.sum %></span>
+      <% end %>
+      <% StatusCatalog.keys(:workshop).each do |key| %>
+        <%= link_to operator_workshops_path(status: key, category_id: @category&.id), aria: { current: (@status == key ? "page" : nil) } do %>
+          <%= StatusCatalog.label(:workshop, key) %> <span class="kz-count"><%= @counts.fetch(key, 0) %></span>
+        <% end %>
+      <% end %>
+    </nav>
+
+    <%= form_with url: operator_workshops_path, method: :get, class: "flex items-end gap-2" do %>
+      <%= hidden_field_tag :status, @status if @status %>
+      <div class="kz-field">
+        <label class="kz-label" for="category_id">Categoría</label>
+        <div class="kz-select-wrap"><%= select_tag :category_id, options_from_collection_for_select(Category.active, :id, :name, @category&.id), include_blank: "Todas", class: "kz-select", onchange: "this.form.requestSubmit()" %></div>
+      </div>
+      <noscript><button class="kz-btn kz-btn--outline">Filtrar</button></noscript>
+    <% end %>
+  </div>
+
+  <section class="kz-card">
+    <% if @workshops.empty? %>
+      <p class="kz-empty">No hay talleres con este filtro.</p>
+    <% else %>
+      <div class="kz-table-wrap">
+        <table class="kz-table">
+          <thead><tr><th>Taller</th><th>Capacidades</th><th>Nivel</th><th>Estado</th><th class="is-num">Puntaje</th></tr></thead>
+          <tbody>
+            <% @workshops.each do |workshop| %>
+              <tr>
+                <td>
+                  <%= link_to workshop.name, operator_workshop_path(workshop), class: "kz-link font-medium" %>
+                  <% if workshop.neighborhood.present? %><div class="text-xs text-ink-muted"><%= workshop.neighborhood %></div><% end %>
+                </td>
+                <td>
+                  <div class="flex flex-wrap gap-1.5">
+                    <% workshop.capabilities.each do |capability| %><%= kz_capability capability.category.slug %><% end %>
+                  </div>
+                </td>
+                <td class="is-meta"><%= workshop.level_label || "—" %></td>
+                <td><%= kz_status workshop.status, kind: :workshop %></td>
+                <td class="is-num"><%= workshop.score || "—" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </section>
+</div>

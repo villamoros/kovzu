@@ -1,0 +1,94 @@
+<%# locals: (sub_order:) -%>
+<%# HU-19 y HU-12: pagos al taller, inspección del lote y entrega. -%>
+<% inspection = sub_order.current_inspection %>
+<div class="border-t border-line grid grid-cols-1 lg:grid-cols-2">
+  <div class="kz-card__body grid gap-4 content-start lg:border-r lg:border-line">
+    <h3 class="kz-overline">Pagos al taller</h3>
+    <ul class="grid gap-4 text-sm">
+      <% Payment::KINDS.each do |kind, label| %>
+        <% payment = sub_order.payment(kind) %>
+        <li class="grid gap-1.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="font-medium"><%= label %> <span class="text-ink-muted font-normal">· pactado <%= kz_money(sub_order.expected_payment_cop(kind)) %></span></span>
+            <% if payment %>
+              <%= kz_status "vigente", kind: :payment, label: "Pagado #{kz_date(payment.paid_on)}" %>
+            <% elsif kind == "anticipo" && sub_order.can_register_advance? %>
+              <%= link_to "Registrar anticipo", new_operator_sub_order_payment_path(sub_order, tipo: "anticipo"), class: "kz-btn kz-btn--primary kz-btn--sm" %>
+            <% elsif kind == "saldo" && sub_order.balance_enabled? %>
+              <%= link_to "Registrar saldo", new_operator_sub_order_payment_path(sub_order, tipo: "saldo"), class: "kz-btn kz-btn--primary kz-btn--sm" %>
+            <% else %>
+              <span class="text-xs text-ink-muted"><%= kind == "saldo" ? "Se habilita con el acta aprobada" : "Pendiente" %></span>
+            <% end %>
+          </div>
+          <% if payment %>
+            <span class="text-ink-muted">
+              <%= kz_money(payment.amount_cop) %><% if payment.mismatch? %> · <span class="text-warning">diferencia de <%= kz_money(payment.difference_cop) %> confirmada</span><% end %>
+              · <%= link_to "Soporte", rails_blob_path(payment.support, disposition: "inline"), class: "kz-link", target: "_blank", rel: "noopener" %>
+              · <%= payment.registered_by %>
+            </span>
+            <details>
+              <summary class="cursor-pointer text-xs text-ink-muted">Anular</summary>
+              <%= form_with url: void_operator_payment_path(payment), class: "mt-2 flex flex-wrap gap-2 items-end" do %>
+                <div class="kz-field grow">
+                  <label class="kz-label" for="reason_<%= payment.id %>">Motivo</label>
+                  <%= text_field_tag :reason, nil, id: "reason_#{payment.id}", class: "kz-input", required: true, placeholder: "El soporte era de otro pedido." %>
+                </div>
+                <button class="kz-btn kz-btn--outline kz-btn--sm">Anular pago</button>
+              <% end %>
+            </details>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+    <% voided = sub_order.payments.select(&:anulado?) %>
+    <% if voided.any? %>
+      <p class="text-xs text-ink-muted">
+        <% voided.each do |payment| %>
+          <%= payment.kind_label %> de <%= kz_money(payment.amount_cop) %> anulado por <%= payment.voided_by %>: <%= payment.void_reason %>
+          (<%= link_to "soporte", rails_blob_path(payment.support, disposition: "inline"), class: "kz-link", target: "_blank", rel: "noopener" %>).
+        <% end %>
+      </p>
+    <% end %>
+  </div>
+
+  <div class="kz-card__body grid gap-4 content-start border-t border-line lg:border-t-0">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h3 class="kz-overline">Inspección</h3>
+      <% if sub_order.en_produccion? || sub_order.reproceso? %>
+        <%= button_to (sub_order.reproceso? ? "Reproceso terminado" : "Producción terminada"), finish_production_operator_sub_order_path(sub_order),
+              class: "kz-btn kz-btn--primary kz-btn--sm", form: { data: { turbo_confirm: "¿El taller terminó? El lote queda listo para inspección." } } %>
+      <% elsif sub_order.inspeccion? %>
+        <%= button_to (inspection&.abierta? ? "Continuar inspección" : "Iniciar inspección"), operator_sub_order_inspections_path(sub_order),
+              class: "kz-btn kz-btn--primary kz-btn--sm" %>
+      <% elsif sub_order.aprobado? && sub_order.balance_paid? %>
+        <%= button_to "Registrar entrega", deliver_operator_sub_order_path(sub_order), class: "kz-btn kz-btn--primary kz-btn--sm",
+              form: { data: { turbo_confirm: "¿El lote llegó al cliente?" } } %>
+      <% end %>
+    </div>
+
+    <% if sub_order.aprobado_con_desviacion? %>
+      <p class="text-sm text-ink-muted">Esperando que el cliente acepte o rechace la desviación. El saldo se habilita con su respuesta.</p>
+    <% end %>
+
+    <% closed = sub_order.inspections.select(&:cerrada?) %>
+    <% if closed.any? %>
+      <ul class="grid gap-3 text-sm">
+        <% closed.reverse_each do |past| %>
+          <li class="flex items-start justify-between gap-3">
+            <span class="grid gap-0.5 min-w-0">
+              <%= link_to "Acta #{past.number}#{" · reinspección" if past.reinspection?}", operator_inspection_path(past), class: "kz-link font-medium" %>
+              <span class="text-ink-muted">
+                <%= kz_date(past.closed_at.to_date) %> · <%= past.closed_by %> · muestra de <%= past.sample_size %>
+                <% if past.deviation_status %> · desviación <%= past.deviation_status %><% end %>
+                <% if past.rework_due_on %> · reproceso hasta <%= kz_date(past.rework_due_on) %><% end %>
+              </span>
+            </span>
+            <%= kz_status past.result, kind: :inspection_result %>
+          </li>
+        <% end %>
+      </ul>
+    <% elsif !sub_order.inspeccion? %>
+      <p class="text-sm text-ink-muted">Cuando el taller termine la producción, márcala aquí para inspeccionar el lote desde el celular.</p>
+    <% end %>
+  </div>
+</div>

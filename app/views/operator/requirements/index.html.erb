@@ -1,0 +1,42 @@
+<% content_for :title, "Requerimientos · KOVZU" %>
+
+<div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", overline: "Operación", title: "Requerimientos",
+        actions: link_to(safe_join([ kz_glyph(:plus), "Registrar requerimiento" ]), new_operator_requirement_path, class: "kz-btn kz-btn--primary") %>
+
+  <nav class="kz-tabs" aria-label="Estado">
+    <% Operator::RequirementsController::TABS.each do |key, label| %>
+      <% count = key == "cola" ? @counts.values_at("en_revision", "esperando_cliente").compact.sum : @counts.fetch(key, 0) %>
+      <%= link_to operator_requirements_path(tab: key), aria: { current: (@tab == key ? "page" : nil) } do %>
+        <%= label %> <span class="kz-count"><%= count %></span>
+      <% end %>
+    <% end %>
+  </nav>
+
+  <section class="kz-card">
+    <% if @requirements.empty? %>
+      <p class="kz-empty"><%= @tab == "cola" ? "No hay requerimientos por revisar." : "Todavía no hay requerimientos aquí." %></p>
+    <% else %>
+      <div class="kz-table-wrap">
+        <table class="kz-table">
+          <thead><tr><th>Requerimiento</th><th>Cliente</th><th>Categoría</th><th>Canal</th><th>Estado</th><th class="is-num">Recibido</th></tr></thead>
+          <tbody>
+            <% @requirements.each do |requirement| %>
+              <tr>
+                <td>
+                  <%= link_to requirement.title, operator_requirement_path(requirement), class: "kz-link font-medium" %>
+                  <% if requirement.quantity %><div class="text-xs text-ink-muted"><%= number_with_delimiter(requirement.quantity, delimiter: ".") %> unidades</div><% end %>
+                </td>
+                <td class="is-meta"><%= requirement.client_company.name %></td>
+                <td class="is-meta"><%= requirement.category&.name || "Sin clasificar" %></td>
+                <td class="is-meta"><%= Requirement::CHANNELS[requirement.channel] %></td>
+                <td><%= kz_status requirement.status, kind: :requirement %></td>
+                <td class="is-num"><%= kz_date(requirement.submitted_at.to_date) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </section>
+</div>

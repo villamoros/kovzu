@@ -1,0 +1,16 @@
+<%# locals: (title:, overline: nil, status: nil, actions: nil, back: nil) -%>
+<header class="grid gap-3">
+  <% if back %>
+    <%= link_to back.last, class: "kz-link text-sm text-ink-muted w-fit" do %>← <%= back.first %><% end %>
+  <% end %>
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div class="grid gap-1 min-w-0">
+      <% if overline %><span class="kz-overline"><%= overline %></span><% end %>
+      <div class="flex flex-wrap items-center gap-3">
+        <h1 class="kz-h1"><%= title %></h1>
+        <%= status %>
+      </div>
+    </div>
+    <% if actions %><div class="flex flex-wrap items-center gap-2"><%= actions %></div><% end %>
+  </div>
+</header>

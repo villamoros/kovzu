@@ -1,0 +1,27 @@
+<% content_for :title, "Pedidos · KOVZU" %>
+
+<div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", overline: current_company.name, title: "Pedidos" %>
+
+  <section class="kz-card">
+    <% if @orders.empty? %>
+      <p class="kz-empty">Cuando un requerimiento esté completo, aquí aparece su pedido.</p>
+    <% else %>
+      <div class="kz-table-wrap">
+        <table class="kz-table">
+          <thead><tr><th>Pedido</th><th>Producto</th><th>Estado</th><th class="is-num">Entrega</th></tr></thead>
+          <tbody>
+            <% @orders.each do |order| %>
+              <tr>
+                <td><%= link_to order.code, order_path(order), class: "kz-link kz-code" %></td>
+                <td><%= order.title %></td>
+                <td><%= kz_status order.status %></td>
+                <td class="is-num"><%= kz_date(order.promised_on) || "—" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </section>
+</div>

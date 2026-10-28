@@ -1,0 +1,102 @@
+<% category = @requirement.category %>
+<% content_for :title, "Nuevo requerimiento · KOVZU" %>
+<% missing = @requirement.errors.any? ? @requirement.missing_template_fields.map { |field| field["key"] } : [] %>
+<% earliest = category && BusinessDays.add(Date.current, category.min_lead_days) %>
+
+<div class="mx-auto max-w-3xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", back: [ "Cambiar categoría", new_requirement_path ],
+        overline: "Nuevo requerimiento · paso 2 de 2", title: category&.name || "Cuéntanos qué necesitas" %>
+
+  <%= form_with model: @requirement, url: requirements_path, class: "grid grid-cols-1 gap-6", data: { controller: "file-check" } do |f| %>
+    <%= render "kz/errors", record: @requirement %>
+    <%= f.hidden_field :category_id %>
+
+    <section class="kz-card kz-card__body grid grid-cols-1 gap-5">
+      <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4">
+        <div class="kz-field <%= "kz-field--error" if @requirement.errors[:title].any? %>">
+          <%= f.label :title, "Producto", class: "kz-label" %>
+          <%= f.text_field :title, class: "kz-input", required: true, placeholder: "Caja plegadiza para frascos de 30 ml" %>
+        </div>
+        <div class="kz-field <%= "kz-field--error" if @requirement.errors[:quantity].any? %>">
+          <%= f.label :quantity, "Cantidad (unidades)", class: "kz-label" %>
+          <%= f.number_field :quantity, class: "kz-input", required: true, min: 1 %>
+        </div>
+      </div>
+
+      <% if @requirement.template_fields.any? %>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <% @requirement.template_fields.each do |field| %>
+            <% key = field["key"] %>
+            <% column = Category::REQUIREMENT_FIELDS[key] %>
+            <% name = column ? "requirement[#{column}]" : "requirement[details][#{key}]" %>
+            <% id = "requirement_field_#{key}" %>
+            <% value = @requirement.field_value(key) %>
+            <div class="kz-field <%= "sm:col-span-2" if field["kind"] == "textarea" %> <%= "kz-field--error" if missing.include?(key) %>">
+              <label class="kz-label" for="<%= id %>"><%= field["label"] %><% unless field["required"] %> <small>(opcional)</small><% end %></label>
+              <% case field["kind"] %>
+              <% when "textarea" %>
+                <%= text_area_tag name, value, id:, class: "kz-textarea", required: field["required"] %>
+              <% when "select" %>
+                <div class="kz-select-wrap"><%= select_tag name, options_for_select(Array(field["options"]), value), id:, include_blank: "Elige una opción", class: "kz-select", required: field["required"] %></div>
+              <% when "number" %>
+                <%= number_field_tag name, value, id:, class: "kz-input", min: 0, required: field["required"] %>
+              <% else %>
+                <%= text_field_tag name, value, id:, class: "kz-input", required: field["required"] %>
+              <% end %>
+              <% if missing.include?(key) %><p class="kz-error">Este dato es obligatorio.</p><% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="kz-field <%= "kz-field--error" if @requirement.errors[:description].any? %>">
+        <%= f.label :description, class: "kz-label" do %>Descripción<% if category %> <small>(opcional)</small><% end %><% end %>
+        <%= f.text_area :description, class: "kz-textarea", required: category.nil?,
+              placeholder: (category ? "Usos, referencias o cualquier detalle que ayude al taller" : "Qué es, para qué lo usas, materiales o referencias que tengas") %>
+      </div>
+    </section>
+
+    <section class="kz-card kz-card__body grid grid-cols-1 gap-4">
+      <h2 class="kz-h3">Fecha y presupuesto</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+        <div class="kz-field" data-controller="lead-time" data-lead-time-earliest-value="<%= earliest&.iso8601 %>">
+          <%= f.label :required_on, "¿Para cuándo lo necesitas?", class: "kz-label" %>
+          <%= f.date_field :required_on, class: "kz-input", min: Date.current, data: { lead_time_target: "input", action: "lead-time#check" } %>
+          <% if earliest %>
+            <p class="kz-hint">El plazo mínimo para <%= category.name.downcase %> es de <%= category.min_lead_days %> días hábiles: desde el <%= l(earliest, format: :long) %>.</p>
+            <p class="kz-error" data-lead-time-target="warning" hidden>Esa fecha es más corta que el plazo mínimo. Puedes enviarlo igual y te decimos qué es posible.</p>
+          <% end %>
+        </div>
+        <div class="kz-field">
+          <%= f.label :budget_cop, class: "kz-label" do %>Presupuesto en pesos <small>(opcional)</small><% end %>
+          <%= f.number_field :budget_cop, class: "kz-input", min: 1, step: 1 %>
+        </div>
+      </div>
+    </section>
+
+    <section class="kz-card kz-card__body grid grid-cols-1 gap-4">
+      <div class="grid gap-1">
+        <h2 class="kz-h3">Archivos y referencias</h2>
+        <p class="text-sm text-ink-muted">Diseños, planos o fotos de referencia: <%= Requirement::FILE_EXTENSIONS.map(&:upcase).join(", ") %>. Hasta 100 MB cada uno.</p>
+      </div>
+      <div class="kz-field">
+        <%= f.label :files, "Adjuntar archivos", class: "kz-label" %>
+        <%= f.file_field :files, multiple: true, class: "kz-input py-2", accept: Requirement::FILE_EXTENSIONS.map { |ext| ".#{ext}" }.join(","),
+              data: { file_check_target: "input", action: "file-check#check", max_bytes: Requirement::MAX_FILE_SIZE, extensions: Requirement::FILE_EXTENSIONS.join(",") } %>
+        <ul class="grid gap-1 text-sm" data-file-check-target="list"></ul>
+        <% if @requirement.errors[:files].any? %><p class="kz-error">Vuelve a adjuntar los archivos válidos.</p><% end %>
+      </div>
+      <div class="kz-field">
+        <%= f.label :reference_links, class: "kz-label" do %>Enlaces <small>(opcional)</small><% end %>
+        <%= f.text_area :reference_links, class: "kz-textarea", rows: 2, placeholder: "Drive, WeTransfer o Dropbox para archivos de más de 100 MB",
+              data: { file_check_target: "links" } %>
+      </div>
+    </section>
+
+    <div class="flex flex-wrap items-center justify-end gap-3">
+      <p class="text-sm text-ink-muted mr-auto">Te confirmamos por correo y lo revisamos en horario hábil.</p>
+      <%= link_to "Cancelar", dashboard_path, class: "kz-btn kz-btn--ghost" %>
+      <button class="kz-btn kz-btn--primary">Enviar requerimiento</button>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,27 @@
+<% content_for :title, "Registrar muestra · KOVZU" %>
+<% order = @sub_order.order %>
+
+<div class="mx-auto max-w-3xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", back: [ "Pedido #{order.code}", operator_order_path(order) ],
+        overline: "Muestra · #{@sub_order.workshop&.name}", title: @sub_order.title %>
+
+  <%= form_with model: @sample, url: operator_sub_order_samples_path(@sub_order), class: "kz-card kz-card__body grid grid-cols-1 gap-5" do |f| %>
+    <div class="kz-field">
+      <%= f.label :kind, "Tipo de muestra", class: "kz-label" %>
+      <div class="kz-select-wrap"><%= f.select :kind, Sample::KINDS.invert, {}, class: "kz-select" %></div>
+    </div>
+    <div class="kz-field">
+      <%= f.label :photos, "Fotos", class: "kz-label" %>
+      <%= f.file_field :photos, multiple: true, accept: Sample::PHOTO_TYPES.join(","), class: "kz-input py-2", required: true %>
+      <p class="kz-hint">El cliente las ve para aprobar o pedir ajustes. Incluye una foto con medidas si aplica.</p>
+    </div>
+    <div class="kz-field">
+      <%= f.label :notes, class: "kz-label" do %>Notas para el cliente <small>(opcional)</small><% end %>
+      <%= f.text_area :notes, class: "kz-textarea", rows: 3, placeholder: "La muestra física está en la oficina de KOVZU." %>
+    </div>
+    <div class="flex flex-wrap justify-end gap-2">
+      <%= link_to "Cancelar", operator_order_path(order), class: "kz-btn kz-btn--ghost" %>
+      <button class="kz-btn kz-btn--primary">Registrar y avisar al cliente</button>
+    </div>
+  <% end %>
+</div>

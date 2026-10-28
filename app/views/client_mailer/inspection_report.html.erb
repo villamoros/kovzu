@@ -1,0 +1,12 @@
+<h1 style="font-size:20px;margin:0 0 12px;">Acta de inspección: <%= @inspection.result_label.downcase %></h1>
+<p>Pedido <strong><%= @order.code %></strong> · <%= @inspection.sub_order.title %></p>
+<% case @inspection.result %>
+<% when "aprobado" %>
+  <p>Revisamos <%= @inspection.sample_size %> de <%= number_with_delimiter(@inspection.lot_size) %> unidades y el lote cumple la ficha técnica.</p>
+<% when "aprobado_con_desviacion" %>
+  <p>El lote tiene una desviación menor. Revisa el acta y dinos si la aceptas: el saldo se habilita con tu respuesta.</p>
+<% else %>
+  <p>El lote no cumple la ficha técnica. Despacho y saldo quedan en pausa mientras el taller reprocesa a su costo. Reinspección prevista: <%= l(@inspection.rework_due_on, format: :long) %>.</p>
+<% end %>
+<p>Adjuntamos el acta en PDF con el muestreo, las mediciones y las fotos.</p>
+<a href="<%= @url %>" style="display:inline-block;margin-top:16px;padding:12px 20px;background:#C8F03C;color:#0B1F33;border-radius:999px;text-decoration:none;font-weight:600;"><%= @inspection.deviation_pending? ? "Revisar la desviación" : "Ver el acta" %></a>

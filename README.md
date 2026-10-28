@@ -28,6 +28,27 @@ Requisitos: Ruby 3.4, PostgreSQL 17 corriendo en local y una app creada en [dash
 
 Abre http://localhost:3000.
 
+## Datos de ejemplo
+
+`db/seeds/demo.rb` carga en desarrollo clientes, talleres y pedidos en todos los estados: cotizando por enlace, propuesta enviada, muestra por revisar, inspección abierta, acta con desviación, saldo por registrar, entregados, un taller en mora y tres lotes con segundo rechazo (por decidir, descuento esperando al cliente y reasignado con el anticipo por devolver). Solo se carga si no hay pedidos, así que para empezar de cero:
+
+```bash
+bin/rails db:seed:replant   # borra los datos y vuelve a sembrar
+```
+
+Entra una vez con Clerk y dale un rol a tu usuario. Puedes alternar entre los dos lados con la misma cuenta:
+
+```bash
+bin/rails kovzu:operator EMAIL=tu@correo.com                              # panel /operador
+bin/rails kovzu:client EMAIL=tu@correo.com COMPANY="Aroma de Café SAS"   # portal del cliente
+```
+
+Al sembrar, la consola imprime el enlace `/cotizar/...` que vería el taller Cartón Valle.
+
+## Correos
+
+Salen por Resend (SMTP) con `RESEND_API_KEY`. En desarrollo solo se envían si además defines `DEV_MAIL_TO`, y todos llegan a ese buzón. Sin un dominio verificado en Resend, solo se entregan al correo de tu cuenta de Resend.
+
 ## Autenticación
 
 - Clerk monta sus componentes (`SignIn`, `SignUp`, `UserButton`) desde `app/javascript/controllers/clerk_controller.js`, con los colores del sistema de diseño.
@@ -36,4 +57,4 @@ Abre http://localhost:3000.
 
 ## Producción
 
-La app lee `DATABASE_URL` (Neon o Supabase). Solid Cache, Queue y Cable comparten esa misma base, así que basta una base gratuita. Variables necesarias: `DATABASE_URL`, `RAILS_MASTER_KEY`, `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`.
+La app lee `DATABASE_URL` (Neon o Supabase). Solid Cache, Queue y Cable comparten esa misma base, así que basta una base gratuita. Variables necesarias: `DATABASE_URL`, `RAILS_MASTER_KEY`, `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `RESEND_API_KEY`, `MAIL_FROM` (con un dominio verificado en Resend) y `APP_HOST` (el dominio público, para los enlaces de los correos).

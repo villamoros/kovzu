@@ -1,0 +1,5 @@
+<h1 style="font-size:20px;margin:0 0 12px;">Tu propuesta está lista</h1>
+<p>Pedido <strong><%= @order.code %></strong> · <%= @order.title %></p>
+<p>Total <strong><%= number_to_currency(@proposal.total_cop, precision: 0) %></strong> · entrega estimada el <%= l(@proposal.promised_on, format: :long) %>.</p>
+<p>Revisa la ficha técnica y acéptala o pide cambios.</p>
+<a href="<%= @url %>" style="display:inline-block;margin-top:16px;padding:12px 20px;background:#C8F03C;color:#0B1F33;border-radius:999px;text-decoration:none;font-weight:600;">Revisar propuesta</a>

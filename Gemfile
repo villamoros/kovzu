@@ -65,3 +65,10 @@ end
 
 # Authentication (Clerk)
 gem "clerk-sdk-ruby", "~> 4.2", require: "clerk"
+
+# Acta de inspección en PDF (HU-13)
+gem "prawn", "~> 2.5"
+gem "prawn-table", "~> 0.2"
+
+# Detalle del corte de comisiones en CSV (HU-20). Ya no viene por defecto desde Ruby 3.4.
+gem "csv", "~> 3.3"

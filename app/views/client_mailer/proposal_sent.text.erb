@@ -1,0 +1,6 @@
+Tu propuesta está lista
+
+Pedido <%= @order.code %> · <%= @order.title %>
+Total <%= number_to_currency(@proposal.total_cop, precision: 0) %> · entrega estimada el <%= l(@proposal.promised_on, format: :long) %>.
+
+Revisa la ficha técnica y acéptala o pide cambios: <%= @url %>

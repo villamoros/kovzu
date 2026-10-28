@@ -1,0 +1,72 @@
+<%# locals: (order:, sub_order:) -%>
+<%# HU-13: lo que el cliente tiene que saber o decidir sobre la inspección y el saldo. -%>
+<% inspection = sub_order.current_inspection %>
+<% if inspection&.deviation_pending? %>
+  <div class="kz-card__body flex flex-wrap items-center justify-between gap-4 border-b border-line bg-warning-soft/40">
+    <div class="grid gap-1">
+      <h3 class="kz-h3">El lote tiene una desviación menor</h3>
+      <p class="text-sm text-ink-muted">Revisa el acta y dinos si la aceptas. El saldo se habilita con tu respuesta.</p>
+    </div>
+    <%= link_to "Revisar el acta", order_inspection_path(order, inspection), class: "kz-btn kz-btn--primary" %>
+  </div>
+<% elsif sub_order.balance_enabled? %>
+  <div class="kz-card__body grid gap-3 border-b border-line bg-success-soft/40">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h3 class="kz-h3">El lote pasó la inspección: ya puedes pagar el saldo</h3>
+      <% if inspection&.cerrada? %><%= link_to "Ver el acta", order_inspection_path(order, inspection), class: "kz-btn kz-btn--outline kz-btn--sm" %><% end %>
+    </div>
+    <p class="text-sm">Saldo a <strong><%= sub_order.workshop.name %></strong>: <strong><%= kz_money(sub_order.expected_payment_cop(:saldo)) %></strong>.</p>
+    <% if sub_order.workshop.payment_details.present? %>
+      <p class="text-sm whitespace-pre-line rounded-xl bg-surface px-4 py-3 border border-line"><%= sub_order.workshop.payment_details %></p>
+    <% end %>
+    <p class="text-xs text-ink-muted">Cuando pagues, envíanos el soporte y coordinamos el despacho.</p>
+  </div>
+<% elsif sub_order.reproceso? && inspection&.cerrada? %>
+  <div class="kz-card__body flex flex-wrap items-center justify-between gap-4 border-b border-line bg-danger-soft/40">
+    <div class="grid gap-1">
+      <h3 class="kz-h3">El lote no pasó la inspección</h3>
+      <p class="text-sm text-ink-muted">Despacho y saldo quedan en pausa. El taller reprocesa a su costo<%= " hasta el #{kz_date(inspection.rework_due_on)}" if inspection.rework_due_on %> y volvemos a inspeccionar.</p>
+    </div>
+    <%= link_to "Ver el acta", order_inspection_path(order, inspection), class: "kz-btn kz-btn--outline kz-btn--sm" %>
+  </div>
+<% elsif sub_order.escalado? && (discount = sub_order.pending_discount) %>
+  <% balance = sub_order.expected_payment_cop(:saldo) %>
+  <div class="kz-card__body grid gap-4 border-b border-line bg-warning-soft/40">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div class="grid gap-1">
+        <h3 class="kz-h3">Te proponemos recibir el lote con un descuento</h3>
+        <p class="text-sm text-ink-muted">El lote no pasó la reinspección. <%= discount.reason %></p>
+      </div>
+      <% if inspection&.cerrada? %><%= link_to "Ver el acta", order_inspection_path(order, inspection), class: "kz-btn kz-btn--outline kz-btn--sm" %><% end %>
+    </div>
+    <dl class="grid gap-2 text-sm max-w-sm">
+      <div class="flex justify-between gap-6"><dt class="text-ink-muted">Saldo pactado</dt><dd class="m-0 tabular-nums"><%= kz_money(balance) %></dd></div>
+      <div class="flex justify-between gap-6"><dt class="text-ink-muted">Descuento</dt><dd class="m-0 tabular-nums text-success">− <%= kz_money(discount.discount_cop) %></dd></div>
+      <div class="flex justify-between gap-6 border-t border-line pt-2 font-semibold"><dt>Saldo a pagar</dt><dd class="m-0 tabular-nums"><%= kz_money(balance - discount.discount_cop) %></dd></div>
+    </dl>
+    <div class="flex flex-wrap items-start gap-3">
+      <%= button_to "Acepto el descuento", accept_order_escalation_path(order, discount), class: "kz-btn kz-btn--primary",
+            form: { data: { turbo_confirm: "¿Recibes el lote con un descuento de #{kz_money(discount.discount_cop)}?" } } %>
+      <details class="grow basis-64">
+        <summary class="kz-btn kz-btn--outline cursor-pointer list-none">No lo acepto</summary>
+        <%= form_with url: reject_order_escalation_path(order, discount), class: "mt-3 grid gap-3" do %>
+          <div class="kz-field">
+            <label class="kz-label" for="comment_<%= discount.id %>">¿Por qué?</label>
+            <%= text_area_tag :comment, nil, id: "comment_#{discount.id}", class: "kz-textarea", rows: 2, required: true, placeholder: "Prefiero que otro taller lo fabrique." %>
+          </div>
+          <button class="kz-btn kz-btn--outline justify-self-start">Enviar respuesta</button>
+        <% end %>
+      </details>
+    </div>
+  </div>
+<% elsif sub_order.escalado? %>
+  <div class="kz-card__body border-b border-line bg-danger-soft/40 grid gap-1">
+    <h3 class="kz-h3">Estamos resolviendo un segundo rechazo</h3>
+    <p class="text-sm text-ink-muted">El lote no pasó la reinspección. El equipo de KOVZU te contacta para definir si reasignamos, negociamos un descuento o cancelamos.</p>
+  </div>
+<% elsif sub_order.cotizando? && sub_order.reassigned_at %>
+  <div class="kz-card__body border-b border-line bg-info-soft/40 grid gap-1">
+    <h3 class="kz-h3">Estamos buscando otro taller</h3>
+    <p class="text-sm text-ink-muted">El lote anterior no pasó la reinspección. Te enviamos una nueva propuesta con otro taller verificado, sin volver a cobrar el fee de gestión.</p>
+  </div>
+<% end %>

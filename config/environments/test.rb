@@ -3,6 +3,10 @@
 # your test database is "scratch space" for the test suite and is wiped
 # and recreated between test runs. Don't rely on the data there!
 
+# Llaves de prueba para que el middleware de Clerk arranque sin red; las pruebas simulan la sesión.
+ENV["CLERK_SECRET_KEY"] ||= "sk_test_dummy"
+ENV["CLERK_PUBLISHABLE_KEY"] ||= "pk_test_Y2xlcmsuZXhhbXBsZS5jb20k"
+
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 

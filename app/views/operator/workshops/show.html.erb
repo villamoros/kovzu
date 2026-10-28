@@ -1,0 +1,170 @@
+<% content_for :title, "#{@workshop.name} · KOVZU" %>
+
+<div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", back: [ "Talleres", operator_workshops_path ],
+        overline: [ "Taller", @workshop.level_label ].compact.join(" · "), title: @workshop.name,
+        status: safe_join([ kz_status(@workshop.status, kind: :workshop), (tag.span("En mora", class: "kz-status kz-status--danger") if @workshop.delinquent?) ]),
+        actions: link_to("Editar", edit_operator_workshop_path(@workshop), class: "kz-btn kz-btn--outline") %>
+
+  <% if @workshop.delinquent? %>
+    <div class="kz-alert kz-alert--danger" role="alert">
+      <%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %>
+      <div><p class="kz-alert__title">En mora con comisiones</p><p class="kz-alert__body">Tiene comisiones facturadas con más de <%= Commission::DELINQUENT_DAYS %> días de mora. No recibe solicitudes de cotización hasta que pague (RN-09). <%= link_to "Ver cartera", operator_commissions_path, class: "kz-link" %></p></div>
+    </div>
+  <% end %>
+
+  <% if @workshop.status_reason.present? %>
+    <div class="kz-alert kz-alert--warning" role="status">
+      <%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %>
+      <div><p class="kz-alert__title"><%= @workshop.status_label %></p><p class="kz-alert__body"><%= @workshop.status_reason %></p></div>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6 items-start">
+    <div class="grid gap-6">
+      <article class="kz-sheet">
+        <header class="kz-sheet__head">
+          <span class="kz-overline">Ficha del taller</span>
+          <span class="text-xs text-ink-muted">Registrado el <%= kz_date(@workshop.created_at.to_date) %></span>
+        </header>
+        <dl class="kz-sheet__grid">
+          <div class="kz-sheet__row"><dt>NIT</dt><dd><%= @workshop.nit.presence || "—" %></dd></div>
+          <div class="kz-sheet__row"><dt>Contacto</dt><dd><%= @workshop.contact_name.presence || "—" %></dd></div>
+          <div class="kz-sheet__row"><dt>Teléfono</dt><dd><%= @workshop.phone.presence || "—" %></dd></div>
+          <div class="kz-sheet__row"><dt>WhatsApp</dt><dd><%= @workshop.whatsapp.presence || "—" %></dd></div>
+          <div class="kz-sheet__row"><dt>Correo</dt><dd><%= @workshop.email.presence || "—" %></dd></div>
+          <div class="kz-sheet__row"><dt>Dirección</dt><dd><%= [ @workshop.address, @workshop.neighborhood ].compact_blank.join(" · ").presence || "—" %></dd></div>
+          <div class="kz-sheet__row"><dt>Puntaje</dt><dd><%= @workshop.score || "—" %></dd></div>
+          <div class="kz-sheet__row"><dt>Comisión</dt><dd><%= kz_percent(@workshop.commission_percent) %></dd></div>
+          <div class="kz-sheet__row"><dt>Datos de pago</dt><dd class="whitespace-pre-line"><%= @workshop.payment_details.presence || "—" %></dd></div>
+          <div class="kz-sheet__row"><dt>Visitado</dt><dd><%= @workshop.visited_at ? kz_date(@workshop.visited_at.to_date) : "—" %></dd></div>
+          <div class="kz-sheet__row kz-sheet__row--wide"><dt>Máquinas</dt><dd><%= simple_format(@workshop.machines.presence || "—", {}, wrapper_tag: "span") %></dd></div>
+          <% if @workshop.notes.present? %>
+            <div class="kz-sheet__row kz-sheet__row--wide"><dt>Notas</dt><dd><%= simple_format(@workshop.notes, {}, wrapper_tag: "span") %></dd></div>
+          <% end %>
+        </dl>
+      </article>
+
+      <section class="kz-card">
+        <div class="kz-card__header"><h2 class="kz-card__title">Capacidades</h2></div>
+        <% if @workshop.capabilities.empty? %>
+          <p class="kz-empty">Sin capacidades registradas. No aparecerá como candidato para cotizar.</p>
+        <% else %>
+          <div class="kz-table-wrap">
+            <table class="kz-table">
+              <thead><tr><th>Categoría</th><th>Procesos</th><th>Materiales</th><th>Volumen</th></tr></thead>
+              <tbody>
+                <% @workshop.capabilities.includes(:category).each do |capability| %>
+                  <tr>
+                    <td><%= kz_capability capability.category.slug %></td>
+                    <td class="is-meta"><%= capability.processes.presence || "—" %></td>
+                    <td class="is-meta"><%= capability.materials.presence || "—" %></td>
+                    <td class="is-meta"><%= capability.volume_label %><% if capability.tolerances.present? %><div class="text-xs">Tolerancia <%= capability.tolerances %></div><% end %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% end %>
+      </section>
+
+      <section class="kz-card">
+        <div class="kz-card__header"><h2 class="kz-card__title">Cotizaciones recientes</h2></div>
+        <% if @quotes.empty? %>
+          <p class="kz-empty">Todavía no ha cotizado.</p>
+        <% else %>
+          <div class="kz-table-wrap">
+            <table class="kz-table">
+              <thead><tr><th>Pedido</th><th>Subpedido</th><th>Estado</th><th class="is-num">Precio</th><th class="is-num">Plazo</th></tr></thead>
+              <tbody>
+                <% @quotes.each do |quote| %>
+                  <tr>
+                    <td><%= link_to quote.sub_order.order.code, operator_order_path(quote.sub_order.order), class: "kz-link kz-code" %></td>
+                    <td class="is-meta"><%= quote.sub_order.title %></td>
+                    <td><%= kz_status quote.status, kind: :quote %></td>
+                    <td class="is-num"><%= kz_money(quote.price_cop) %></td>
+                    <td class="is-num"><%= quote.lead_days ? "#{quote.lead_days} d" : "—" %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% end %>
+      </section>
+    </div>
+
+    <aside class="grid gap-4 order-first lg:order-none">
+      <section class="kz-card kz-card__body grid gap-3">
+        <h2 class="kz-h3">Verificación</h2>
+        <% missing = @workshop.missing_for_verification %>
+        <ul class="grid gap-2 text-sm">
+          <% [ [ "RUT activo", @workshop.has_rut? ], [ "Factura electrónica", @workshop.e_invoicing? ] ].each do |label, ok| %>
+            <li class="flex items-center gap-2 <%= "text-ink-muted" unless ok %>"><%= kz_glyph(ok ? :check : :close, class: ok ? "text-success" : "text-ink-subtle") %><%= label %></li>
+          <% end %>
+          <% Workshop::VISIT_ITEMS.each do |key, label| %>
+            <% ok = @workshop.visit_item?(key) %>
+            <li class="flex items-center gap-2 <%= "text-ink-muted" unless ok %>"><%= kz_glyph(ok ? :check : :close, class: ok ? "text-success" : "text-ink-subtle") %><%= label %></li>
+          <% end %>
+        </ul>
+
+        <% if @workshop.prospecto? %>
+          <% if missing.any? %>
+            <p class="kz-hint">Completa el checklist en <%= link_to "Editar", edit_operator_workshop_path(@workshop), class: "kz-link" %> para pasarlo a verificación.</p>
+          <% else %>
+            <%= button_to "Pasar a verificación", start_verification_operator_workshop_path(@workshop), class: "kz-btn kz-btn--primary w-full" %>
+          <% end %>
+        <% elsif @workshop.en_verificacion? %>
+          <p class="text-sm text-ink-muted">Cuando el pedido piloto salga conforme, apruébalo para que pueda cotizar.</p>
+          <%= button_to "Aprobar piloto y verificar", approve_pilot_operator_workshop_path(@workshop), class: "kz-btn kz-btn--primary w-full",
+                disabled: !(@workshop.has_rut? && @workshop.e_invoicing?) %>
+          <% unless @workshop.has_rut? && @workshop.e_invoicing? %><p class="kz-hint">Falta RUT o factura electrónica.</p><% end %>
+        <% elsif @workshop.pausado? %>
+          <%= button_to "Reactivar", resume_operator_workshop_path(@workshop), class: "kz-btn kz-btn--primary w-full" %>
+        <% end %>
+      </section>
+
+      <% if @workshop.verificado? %>
+        <details class="kz-card">
+          <summary class="px-6 py-4 cursor-pointer text-sm font-medium text-ink-muted">Pausar taller</summary>
+          <%= form_with url: pause_operator_workshop_path(@workshop), class: "px-6 pb-6 grid gap-4" do %>
+            <div class="kz-field">
+              <label class="kz-label" for="pause_reason">Motivo</label>
+              <%= text_area_tag :reason, nil, id: "pause_reason", class: "kz-textarea", required: true, placeholder: "Dos rechazos seguidos en inspección." %>
+              <p class="kz-hint">Mientras esté pausado no recibe solicitudes de cotización.</p>
+            </div>
+            <button class="kz-btn kz-btn--outline">Pausar</button>
+          <% end %>
+        </details>
+      <% end %>
+
+      <% unless @workshop.retirado? %>
+        <details class="kz-card">
+          <summary class="px-6 py-4 cursor-pointer text-sm font-medium text-ink-muted">Retirar de la red</summary>
+          <%= form_with url: retire_operator_workshop_path(@workshop), class: "px-6 pb-6 grid gap-4" do %>
+            <div class="kz-field">
+              <label class="kz-label" for="retire_reason">Motivo</label>
+              <%= text_area_tag :reason, nil, id: "retire_reason", class: "kz-textarea", required: true %>
+            </div>
+            <button class="kz-btn kz-btn--danger">Retirar taller</button>
+          <% end %>
+        </details>
+      <% end %>
+
+      <section class="kz-card">
+        <div class="kz-card__header"><h2 class="kz-card__title">Bitácora</h2></div>
+        <% if @events.empty? %>
+          <p class="kz-empty">Sin eventos.</p>
+        <% else %>
+          <ol class="divide-y divide-line">
+            <% @events.each do |event| %>
+              <li class="flex justify-between gap-4 px-6 py-3 text-sm">
+                <span><%= t("audit.#{event.action}", default: event.action.humanize) %><span class="text-ink-muted"> · <%= event.actor_name %></span></span>
+                <time class="text-ink-muted tabular-nums whitespace-nowrap" datetime="<%= event.created_at.iso8601 %>"><%= kz_date(event.created_at.to_date) %></time>
+              </li>
+            <% end %>
+          </ol>
+        <% end %>
+      </section>
+    </aside>
+  </div>
+</div>

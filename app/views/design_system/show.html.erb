@@ -45,11 +45,11 @@
               <tr><th>Pedido</th><th>Producto</th><th>Taller</th><th>Estado</th><th class="is-num">Entrega</th></tr>
             </thead>
             <tbody>
-              <tr><td class="kz-code">KZ-0142</td><td>Empaque secundario</td><td class="is-meta">Cartón Valle</td><td><%= kz_status "en_produccion" %></td><td class="is-num">03 nov</td></tr>
-              <tr><td class="kz-code">KZ-0143</td><td>Etiquetas adhesivas</td><td class="is-meta">Litografía Pance</td><td><%= kz_status "muestra_pendiente" %></td><td class="is-num">04 nov</td></tr>
-              <tr><td class="kz-code">KZ-0144</td><td>Exhibidor de mesa</td><td class="is-meta">Maderas del Sur</td><td><%= kz_status "inspeccion" %></td><td class="is-num">05 nov</td></tr>
-              <tr><td class="kz-code">KZ-0139</td><td>Dotación bordada</td><td class="is-meta">Confecciones Alameda</td><td><%= kz_status "reproceso" %></td><td class="is-num">31 oct</td></tr>
-              <tr><td class="kz-code">KZ-0131</td><td>Caja plegadiza con inserto</td><td class="is-meta">Cartón Valle</td><td><%= kz_status "entregado" %></td><td class="is-num">24 oct</td></tr>
+              <tr><td class="kz-code">KZ-0142</td><td>Empaque secundario</td><td class="is-meta">Cartón Valle</td><td><%= kz_status "en_produccion", kind: :sub_order %></td><td class="is-num">03 nov</td></tr>
+              <tr><td class="kz-code">KZ-0143</td><td>Etiquetas adhesivas</td><td class="is-meta">Litografía Pance</td><td><%= kz_status "muestra_pendiente", kind: :sub_order %></td><td class="is-num">04 nov</td></tr>
+              <tr><td class="kz-code">KZ-0144</td><td>Exhibidor de mesa</td><td class="is-meta">Maderas del Sur</td><td><%= kz_status "inspeccion", kind: :sub_order %></td><td class="is-num">05 nov</td></tr>
+              <tr><td class="kz-code">KZ-0139</td><td>Dotación bordada</td><td class="is-meta">Confecciones Alameda</td><td><%= kz_status "reproceso", kind: :sub_order %></td><td class="is-num">31 oct</td></tr>
+              <tr><td class="kz-code">KZ-0131</td><td>Caja plegadiza con inserto</td><td class="is-meta">Cartón Valle</td><td><%= kz_status "entregado", kind: :sub_order %></td><td class="is-num">24 oct</td></tr>
             </tbody>
           </table>
         </div>
@@ -103,7 +103,7 @@
       <article class="kz-sheet">
         <header class="kz-sheet__head">
           <span class="kz-overline">KOVZU / Ficha técnica</span>
-          <%= kz_status "borrador", label: "Borrador" %>
+          <%= kz_status "borrador", kind: :tech_sheet %>
         </header>
         <dl class="kz-sheet__grid">
           <div class="kz-sheet__row"><dt>Pedido</dt><dd class="kz-code">KZ-0001</dd></div>
@@ -131,7 +131,7 @@
           <% KzHelper::CAPABILITIES.each_key do |key| %><%= kz_capability key %><% end %>
         </div>
         <div class="flex flex-wrap gap-2">
-          <% KzHelper::WORKSHOP_STATUSES.each_key do |key| %><%= kz_status key, kind: :workshop %><% end %>
+          <% StatusCatalog.keys(:workshop).each do |key| %><%= kz_status key, kind: :workshop %><% end %>
         </div>
         <div class="flex items-center gap-6 pt-2">
           <%= kz_logo :signature, class: "h-14" %>

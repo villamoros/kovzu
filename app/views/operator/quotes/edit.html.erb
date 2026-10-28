@@ -1,0 +1,40 @@
+<% content_for :title, "Cargar cotización · KOVZU" %>
+<% order = @quote.sub_order.order %>
+
+<div class="mx-auto max-w-3xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", back: [ "Pedido #{order.code}", operator_order_path(order) ],
+        overline: "Cotización · #{@quote.sub_order.title} · ficha v#{format("%02d", @quote.tech_sheet.version)}", title: @quote.workshop.name,
+        status: kz_status(@quote.status, kind: :quote) %>
+
+  <%= form_with model: @quote, url: operator_quote_path(@quote), method: :patch, class: "kz-card kz-card__body grid grid-cols-1 gap-5" do |f| %>
+    <p class="text-sm text-ink-muted">Para cotizaciones que llegaron por WhatsApp o correo. Queda marcada como cargada por el operador, con el soporte adjunto.</p>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="kz-field"><%= f.label :price_cop, "Precio (COP, antes de IVA)", class: "kz-label" %><%= f.number_field :price_cop, class: "kz-input", min: 1, step: 1, required: true %></div>
+      <div class="kz-field"><%= f.label :lead_days, "Plazo (días hábiles)", class: "kz-label" %><%= f.number_field :lead_days, class: "kz-input", min: 1, required: true %></div>
+      <div class="kz-field"><%= f.label :valid_until, class: "kz-label" do %>Vigencia <small>(opcional)</small><% end %><%= f.date_field :valid_until, class: "kz-input", min: Date.current %></div>
+    </div>
+    <div class="kz-field">
+      <%= f.label :conditions, class: "kz-label" do %>Condiciones <small>(opcional)</small><% end %>
+      <%= f.text_area :conditions, class: "kz-textarea", rows: 3, placeholder: "Incluye troquel. Anticipo del 50 %." %>
+    </div>
+    <div class="kz-field">
+      <%= f.label :support, "Soporte (captura o PDF)", class: "kz-label" %>
+      <%= f.file_field :support, class: "kz-input py-2", required: true, accept: "image/*,application/pdf" %>
+    </div>
+    <div class="flex flex-wrap justify-end gap-2">
+      <%= link_to "Cancelar", operator_order_path(order), class: "kz-btn kz-btn--ghost" %>
+      <button class="kz-btn kz-btn--primary">Cargar cotización</button>
+    </div>
+  <% end %>
+
+  <details class="kz-card">
+    <summary class="px-6 py-4 cursor-pointer text-sm font-medium text-ink-muted">El taller no va a cotizar</summary>
+    <%= form_with url: decline_operator_quote_path(@quote), class: "px-6 pb-6 grid gap-4" do %>
+      <div class="kz-field">
+        <label class="kz-label" for="reason">Motivo</label>
+        <%= text_area_tag :reason, nil, class: "kz-textarea", required: true, placeholder: "Sin capacidad para esa fecha." %>
+      </div>
+      <button class="kz-btn kz-btn--outline">Registrar que no cotiza</button>
+    <% end %>
+  </details>
+</div>

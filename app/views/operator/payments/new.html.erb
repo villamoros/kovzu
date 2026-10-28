@@ -1,0 +1,51 @@
+<% content_for :title, "Registrar #{@payment.kind_label.downcase} · KOVZU" %>
+<% order = @sub_order.order %>
+<% expected = @sub_order.expected_payment_cop(@payment.kind) %>
+
+<div class="mx-auto max-w-2xl px-4 sm:px-6 py-8 grid grid-cols-1 gap-6">
+  <%= render "kz/page_header", back: [ "Pedido #{order.code}", operator_order_path(order) ],
+        overline: "#{@sub_order.title} · #{@sub_order.workshop&.name}", title: "Registrar #{@payment.kind_label.downcase}" %>
+
+  <%= form_with model: @payment, url: operator_sub_order_payments_path(@sub_order), class: "kz-card kz-card__body grid grid-cols-1 gap-5",
+        data: { controller: "amount-check", amount_check_expected_value: expected } do |f| %>
+    <%= f.hidden_field :kind %>
+    <p class="text-sm text-ink-muted">
+      Lo que el cliente le pagó a <%= @sub_order.workshop&.name %>. Valor pactado: <strong class="text-ink"><%= kz_money(expected) %></strong>.
+      <%= @payment.anticipo? ? "Con el anticipo, el subpedido pasa a la etapa de muestra." : "Con el saldo se causa la comisión del taller (#{kz_percent(@sub_order.workshop&.commission_percent)})." %>
+    </p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="kz-field">
+        <%= f.label :amount_cop, "Valor pagado (COP)", class: "kz-label" %>
+        <%= f.number_field :amount_cop, class: "kz-input", min: 1, step: 1, required: true, inputmode: "numeric",
+              data: { amount_check_target: "input", action: "input->amount-check#check" } %>
+      </div>
+      <div class="kz-field">
+        <%= f.label :paid_on, "Fecha del pago", class: "kz-label" %>
+        <%= f.date_field :paid_on, class: "kz-input", max: Date.current, required: true %>
+      </div>
+    </div>
+    <div class="kz-alert kz-alert--warning" data-amount-check-target="warning" <%= "hidden" unless @mismatch %>>
+      <%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %>
+      <div class="grid gap-2">
+        <p class="kz-alert__title">El valor no coincide con lo pactado</p>
+        <label class="kz-check">
+          <%= check_box_tag :confirm_mismatch, "1", false, data: { amount_check_target: "confirm" } %>
+          <span>Confirmo que el valor pagado es distinto de <%= kz_money(expected) %>.</span>
+        </label>
+      </div>
+    </div>
+    <div class="kz-field">
+      <%= f.label :support, "Soporte (captura o PDF de la transferencia)", class: "kz-label" %>
+      <%= f.file_field :support, class: "kz-input py-2", required: true, accept: "image/*,application/pdf" %>
+      <p class="kz-hint">El soporte no se puede borrar. Si hay un error, el pago se anula con un motivo.</p>
+    </div>
+    <div class="kz-field">
+      <%= f.label :notes, class: "kz-label" do %>Nota <small>(opcional)</small><% end %>
+      <%= f.text_area :notes, class: "kz-textarea", rows: 2 %>
+    </div>
+    <div class="flex flex-wrap justify-end gap-2">
+      <%= link_to "Cancelar", operator_order_path(order), class: "kz-btn kz-btn--ghost" %>
+      <button class="kz-btn kz-btn--primary">Registrar <%= @payment.kind_label.downcase %></button>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,10 @@
+<h1 style="font-size:20px;margin:0 0 12px;">Ya puedes pagar el saldo</h1>
+<p>Pedido <strong><%= @order.code %></strong> · <%= @sub_order.title %></p>
+<p>El lote pasó la inspección. El saldo a <strong><%= @sub_order.workshop.name %></strong> es de <strong><%= number_to_currency(@amount, precision: 0) %></strong>.</p>
+<% if @sub_order.workshop.payment_details.present? %>
+  <p style="padding:12px 16px;background:#F4F3EE;border-radius:12px;white-space:pre-line;"><%= @sub_order.workshop.payment_details %></p>
+<% else %>
+  <p>Te enviamos los datos de pago del taller por WhatsApp.</p>
+<% end %>
+<p>Cuando pagues, envíanos el soporte y coordinamos el despacho.</p>
+<a href="<%= @url %>" style="display:inline-block;margin-top:16px;padding:12px 20px;background:#C8F03C;color:#0B1F33;border-radius:999px;text-decoration:none;font-weight:600;">Ver pedido</a>

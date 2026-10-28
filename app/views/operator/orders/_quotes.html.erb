@@ -1,0 +1,60 @@
+<%# locals: (order:, sub_order:) -%>
+<%# HU-06: cotizaciones lado a lado. Una vencida se marca y no se puede elegir. -%>
+<% open_for_proposal = sub_order.cotizando? %>
+<div class="border-t border-line">
+  <div class="flex flex-wrap items-center justify-between gap-3 px-6 pt-5">
+    <h3 class="kz-overline">Cotizaciones</h3>
+    <% if (sub_order.current_tech_sheet&.lista? || sub_order.current_tech_sheet&.aceptada?) && sub_order.open_quotes.count < SubOrder::MAX_QUOTES && sub_order.cotizando? %>
+      <%= link_to "Pedir otra", new_operator_sub_order_quote_request_path(sub_order), class: "kz-link text-sm" %>
+    <% end %>
+  </div>
+  <div class="kz-table-wrap">
+    <table class="kz-table">
+      <thead><tr><th>Taller</th><th>Nivel</th><th class="is-num">Puntaje</th><th class="is-num">Precio</th><th class="is-num">Plazo</th><th>Vigencia</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        <% sub_order.quotes.sort_by { |quote| [ quote.price_cop ? 0 : 1, quote.price_cop || 0 ] }.each do |quote| %>
+          <% expired = quote.offer_expired? %>
+          <tr>
+            <td>
+              <%= link_to quote.workshop.name, operator_workshop_path(quote.workshop), class: "kz-link font-medium" %>
+              <% if quote.conditions.present? %><div class="text-xs text-ink-muted max-w-56"><%= quote.conditions %></div><% end %>
+              <% if quote.rechazada? %><div class="text-xs text-ink-muted"><%= quote.decline_reason %></div><% end %>
+              <% if quote.solicitada? %>
+                <% link = workshop_quote_url(quote.token) %>
+                <div class="flex flex-wrap items-center gap-x-2 text-xs text-ink-muted" data-controller="clipboard" data-clipboard-text-value="<%= link %>">
+                  <% if quote.link_usable? %>
+                    <span>Enlace hasta el <%= kz_date(quote.link_expires_at.to_date) %></span>
+                    <button type="button" class="kz-link" data-action="clipboard#copy">Copiar</button>
+                    <% if (phone = quote.workshop.whatsapp.to_s.gsub(/\D/, "")).present? %>
+                      <%= link_to "WhatsApp", "https://wa.me/#{phone}?text=#{ERB::Util.url_encode("Hola, KOVZU te invita a cotizar #{sub_order.title}: #{link}")}", class: "kz-link", target: "_blank", rel: "noopener" %>
+                    <% end %>
+                  <% else %>
+                    <span class="<%= "text-warning" if quote.renewal_requested_at %>"><%= quote.renewal_requested_at ? "El taller pidió un enlace nuevo" : "Enlace vencido" %></span>
+                    <%= button_to "Renovar enlace", renew_operator_quote_path(quote), class: "kz-link", form_class: "inline" %>
+                  <% end %>
+                </div>
+              <% elsif quote.approvals.any? %>
+                <div class="text-xs text-ink-muted">Cotizó por enlace · aceptó la ficha v<%= quote.tech_sheet.version %></div>
+              <% end %>
+              <% if quote.entered_by_operator? && quote.support.attached? %><div class="text-xs"><%= link_to "Soporte", rails_blob_path(quote.support, disposition: "inline"), class: "kz-link", target: "_blank", rel: "noopener" %> · cargada por el operador</div><% end %>
+            </td>
+            <td class="is-meta"><%= quote.workshop.level_label || "—" %></td>
+            <td class="is-num"><%= quote.workshop.score || "—" %></td>
+            <td class="is-num"><%= kz_money(quote.price_cop) %></td>
+            <td class="is-num"><%= quote.lead_days ? "#{quote.lead_days} d" : "—" %></td>
+            <td class="is-meta <%= "text-danger" if expired %>"><%= quote.valid_until ? kz_date(quote.valid_until) : "—" %></td>
+            <td><%= kz_status((quote.solicitada? && quote.link_expired?) || expired ? "vencida" : quote.status, kind: :quote) %></td>
+            <td class="text-right whitespace-nowrap">
+              <% if quote.solicitada? %>
+                <%= link_to "Cargar", edit_operator_quote_path(quote), class: "kz-btn kz-btn--outline kz-btn--sm" %>
+              <% elsif (quote.recibida? || quote.elegida?) && open_for_proposal && !expired %>
+                <%= link_to (quote.elegida? ? "Proponer de nuevo" : "Proponer"), new_operator_order_proposal_path(order, quote_id: quote.id),
+                      class: "kz-btn kz-btn--sm #{quote.elegida? ? "kz-btn--outline" : "kz-btn--primary"}" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
