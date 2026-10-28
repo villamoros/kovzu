@@ -84,6 +84,7 @@ es:
       tech_sheet: Ficha técnica
       quote: Cotización
       milestone: Hito
+      escalation: Decisión
       proposal: Propuesta
       sample: Muestra
       inspection: Inspección
@@ -157,6 +158,10 @@ es:
         kind: Tipo
       inspection_item:
         photos: Fotos
+      escalation:
+        decision: Decisión
+        reason: Motivo
+        discount_cop: Descuento
       milestone:
         committed_on: Fecha comprometida
         reschedule_reason: Motivo
@@ -176,6 +181,12 @@ es:
       creado: Pedido creado
       confirmado: Pedido confirmado
       escalado: Pedido escalado por segundo rechazo
+      escalado_reasignar: Subpedido reasignado a otro taller
+      escalado_descuento: Descuento propuesto al cliente
+      escalado_cancelar: Subpedido cancelado tras el segundo rechazo
+      descuento_aceptado: El cliente aceptó el descuento
+      descuento_rechazado: El cliente rechazó el descuento
+      anticipo_devuelto: El taller devolvió el anticipo
     cotizacion:
       solicitada: Cotizaciones solicitadas
       recibida: Cotización cargada

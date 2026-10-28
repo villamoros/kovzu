@@ -79,6 +79,11 @@ module StatusCatalog
       "pagada"    => { label: "Pagada",    tone: :success },
       "anulada"   => { label: "Anulada",   tone: :neutral }
     },
+    escalation: {
+      "esperando_cliente" => { label: "Esperando al cliente",     tone: :warning },
+      "aplicada"          => { label: "Aplicada",                 tone: :success },
+      "rechazada"         => { label: "Rechazada por el cliente", tone: :neutral }
+    },
     workshop: {
       "prospecto"       => { label: "Prospecto",       tone: :neutral },
       "en_verificacion" => { label: "En verificación", tone: :info },

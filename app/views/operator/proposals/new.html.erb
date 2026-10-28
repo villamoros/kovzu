@@ -9,11 +9,19 @@
     <%= form_with model: @proposal, url: operator_order_proposals_path(@order), class: "kz-card kz-card__body grid grid-cols-1 gap-5" do |f| %>
       <%= hidden_field_tag "proposal[quote_id]", @quote.id %>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="kz-field">
-          <%= f.label :management_fee_cop, "Fee de gestión (COP)", class: "kz-label" %>
-          <%= f.number_field :management_fee_cop, class: "kz-input", min: 1, step: 1000, required: true %>
-          <p class="kz-hint">Fijo por pedido según el tipo: <%= Order::KINDS[@order.kind].downcase %>.</p>
-        </div>
+        <% if @order.fee_accrued_at %>
+          <div class="kz-field">
+            <span class="kz-label">Fee de gestión</span>
+            <p class="text-sm">Ya pagado: <%= kz_money(@order.management_fee_cop) %></p>
+            <p class="kz-hint">Es una reasignación: la propuesta nueva no vuelve a cobrar el fee (RN-07).</p>
+          </div>
+        <% else %>
+          <div class="kz-field">
+            <%= f.label :management_fee_cop, "Fee de gestión (COP)", class: "kz-label" %>
+            <%= f.number_field :management_fee_cop, class: "kz-input", min: 1, step: 1000, required: true %>
+            <p class="kz-hint">Fijo por pedido según el tipo: <%= Order::KINDS[@order.kind].downcase %>.</p>
+          </div>
+        <% end %>
         <div class="kz-field">
           <%= f.label :advance_percent, "Anticipo al taller (%)", class: "kz-label" %>
           <%= f.number_field :advance_percent, class: "kz-input", min: 0, max: 100, required: true %>

@@ -17,6 +17,7 @@ class SubOrder < ApplicationRecord
   has_many :inspections, -> { order(:number) }, dependent: :restrict_with_error
   has_many :payments, -> { order(:created_at) }, dependent: :restrict_with_error
   has_many :commissions, dependent: :restrict_with_error
+  has_many :escalations, -> { order(:created_at) }, dependent: :restrict_with_error
 
   validates :title, presence: true
   validates :quantity, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
@@ -89,17 +90,30 @@ class SubOrder < ApplicationRecord
 
   def current_inspection = inspections.last
 
+  # Inspecciones del taller actual: tras una reasignación el conteo de rechazos vuelve a empezar (RN-06).
+  def current_lot_inspections
+    reassigned_at ? inspections.select { |inspection| inspection.created_at > reassigned_at } : inspections.to_a
+  end
+
+  def current_escalation = escalations.last
+
+  def pending_discount = escalations.find(&:esperando_cliente?)
+
   def accepted_proposal
-    order.proposals.select(&:aceptada?).find { |proposal| proposal.quote.sub_order_id == id }
+    order.proposals.select(&:aceptada?).reverse.find { |proposal| proposal.quote.sub_order_id == id }
   end
 
   # Valor pactado de cada pago: el de la propuesta aceptada o, sin propuesta, la mitad del valor del taller.
+  # Un descuento aceptado por el cliente (RN-06) se resta del saldo.
   def expected_payment_cop(kind)
     proposal = accepted_proposal
     advance = proposal ? proposal.advance_cop.to_i : (amount_cop.to_i / 2.0).round
     total = proposal ? proposal.workshop_price_cop.to_i : amount_cop.to_i
-    kind.to_s == "anticipo" ? advance : total - advance
+    kind.to_s == "anticipo" ? advance : total - advance - discount_cop.to_i
   end
+
+  # Valor final del taller, base de la comisión (RN-08).
+  def net_amount_cop = amount_cop.to_i - discount_cop.to_i
 
   def payment(kind) = payments.find { |payment| payment.vigente? && payment.kind == kind.to_s }
 

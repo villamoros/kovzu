@@ -129,6 +129,63 @@ class QualityAndPaymentsTest < ActionDispatch::IntegrationTest
     assert order.reload.entregado?
   end
 
+  test "RN-06: el operador propone un descuento tras el segundo rechazo y el cliente decide en el portal" do
+    sub_order = sub_order_in_inspection
+    order = sub_order.order
+    2.times do |round|
+      sub_order.reload.finish_production! by: "Ana" if round.positive?
+      inspection = fill_inspection(Inspection.start_for!(sub_order.reload, by: "Pedro"), nonconforming: { "medidas" => "mayor" })
+      inspection.close!(result: "rechazado", rework_due_on: BusinessDays.add(Date.current, 5), user: staff_user)
+    end
+    assert sub_order.reload.escalado?
+
+    sign_in_as @operator
+    get operator_order_path(order)
+    assert_select "form[action=?]", operator_sub_order_escalations_path(sub_order)
+    post operator_sub_order_escalations_path(sub_order), params: { escalation: { decision: "descuento", discount_cop: "", reason: "Medidas" } }
+    assert_empty sub_order.escalations.reload
+    post operator_sub_order_escalations_path(sub_order), params: { escalation: { decision: "descuento", discount_cop: "100.000", reason: "Medidas fuera de tolerancia" } }
+    assert_redirected_to operator_order_path(order)
+    escalation = sub_order.escalations.reload.sole
+    assert escalation.esperando_cliente?
+    get operator_order_path(order)
+    assert_select ".kz-alert__title", text: /esperando al cliente/
+
+    other = client_user(ClientCompany.create!(name: "Otra"), email: "otra@otra.co")
+    sign_in_as other
+    post accept_order_escalation_path(order, escalation)
+    assert_response :not_found
+
+    sign_in_as client_user(order.client_company)
+    get order_path(order)
+    assert_select "h3", text: "Te proponemos recibir el lote con un descuento"
+    post accept_order_escalation_path(order, escalation)
+    assert_redirected_to order_path(order)
+    assert sub_order.reload.aprobado?
+    assert_equal 400_000, sub_order.expected_payment_cop(:saldo)
+  end
+
+  test "RN-06 / RN-05: reasignar deja el anticipo por devolver en el tablero hasta registrarlo" do
+    sub_order = sub_order_in_inspection
+    sub_order.update!(status: "escalado")
+    sub_order.order.update!(status: "escalado")
+
+    sign_in_as @operator
+    post operator_sub_order_escalations_path(sub_order), params: { escalation: { decision: "reasignar", reason: "El taller no respondió" } }
+    escalation = sub_order.escalations.sole
+    assert sub_order.reload.cotizando?
+
+    get operator_root_path
+    assert_select ".kz-alert__title", text: "Anticipos por devolver"
+    get operator_order_path(sub_order.order)
+    assert_select "form[action=?]", refund_operator_escalation_path(escalation)
+
+    post refund_operator_escalation_path(escalation), params: { received_on: Date.current }
+    assert escalation.reload.refund_received_on
+    get operator_root_path
+    assert_select ".kz-alert__title", text: "Anticipos por devolver", count: 0
+  end
+
   test "un cliente no ve el acta de otra empresa" do
     sub_order = sub_order_in_inspection
     inspection = fill_inspection(Inspection.start_for!(sub_order, by: "Pedro"))

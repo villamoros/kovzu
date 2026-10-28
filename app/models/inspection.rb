@@ -33,7 +33,7 @@ class Inspection < ApplicationRecord
     sheet = sub_order.current_tech_sheet
     transaction do
       inspection = sub_order.inspections.create!(
-        number: sub_order.inspections.maximum(:number).to_i + 1, reinspection_of: sub_order.inspections.cerrada.last,
+        number: sub_order.inspections.maximum(:number).to_i + 1, reinspection_of: sub_order.current_lot_inspections.select(&:cerrada?).last,
         lot_size: sub_order.quantity, sample_size: SamplingPlan.sample_size(sub_order.quantity),
         tech_sheet_version: sheet&.version, criteria: sheet&.acceptance_criteria, started_by: by
       )
@@ -168,7 +168,7 @@ class Inspection < ApplicationRecord
 
   # Despacho y saldo bloqueados. El taller reprocesa a su costo (RN-05); un segundo rechazo escala (RN-06).
   def reject_lot!(due_on, actor)
-    if sub_order.inspections.cerrada.count(&:rejection?) >= 2
+    if sub_order.current_lot_inspections.count { |inspection| inspection.cerrada? && inspection.rejection? } >= 2
       sub_order.update!(status: "escalado")
       order.update!(status: "escalado")
       AuditEvent.record!(order, "pedido.escalado", actor:, data: { sub_order: sub_order.title, reason: "Segundo rechazo del lote" })

@@ -180,6 +180,48 @@ pay_advance.(caps, today - 11)
 caps.milestones.where(kind: %w[anticipo muestra produccion]).find_each { |m| m.complete!(on: [ m.committed_on, today ].min) }
 inspected!(caps, inspector, operator)
 
+# Segundo rechazo del lote (RN-06): uno espera la decisión del operador, otro un descuento que decide el cliente
+# y un tercero se reasignó, con el anticipo por devolver (RN-05).
+def rejected_twice!(sub, inspector, photo, key: "medidas", measurements: [ "-4 mm", "-3 mm" ], note: "Medida interna por debajo de la tolerancia")
+  2.times do |round|
+    sub.reload.update_columns(status: "inspeccion")
+    inspection = Inspection.start_for!(sub, by: inspector.name)
+    inspection.items.each do |item|
+      if item.key == key
+        item.update!(result: "no_conforme", severity: "mayor", measurement: measurements[round], note:)
+        item.photos.attach(photo.())
+      else
+        item.update!(result: "conforme")
+      end
+    end
+    inspection.close!(result: "rechazado", rework_due_on: BusinessDays.add(Date.current, 5), user: inspector)
+  end
+  sub.reload
+end
+
+photo = -> { seed_file.("muestra-exhibidor.png", "image/png") }
+gift = running_order!(clients[:ferre], cats["empaques"], workshops[:carton], "Cajas corrugadas para kits", 600, "en_produccion", today - 25, operator,
+                      { "material" => "Corrugado B", "dimensiones" => "300 × 220 × 90 mm", "impresion" => "1 tinta" })
+pay_advance.(gift, today - 24)
+gift.milestones.where(kind: %w[anticipo muestra produccion]).find_each { |m| m.complete!(on: [ m.committed_on, today ].min) }
+rejected_twice!(gift, inspector, photo)
+
+banners = running_order!(clients[:eventos], cats["impresion"], workshops[:lito], "Pendones para feria", 50, "en_produccion", today - 22, operator,
+                         { "material" => "Lona banner 13 oz", "dimensiones" => "800 × 1.800 mm", "tintas" => "CMYK" })
+banners.update_columns(amount_cop: 1_500_000)
+pay_advance.(banners, today - 21)
+banners.milestones.where(kind: %w[anticipo muestra produccion]).find_each { |m| m.complete!(on: [ m.committed_on, today ].min) }
+rejected_twice!(banners, inspector, photo, key: "color", measurements: [ "ΔE 4,2", "ΔE 3,6" ], note: "Tono más claro que la prueba aprobada")
+Escalation.decide!(banners, decision: "descuento", discount_cop: 250_000, by: operator,
+                   reason: "El color quedó un tono más claro que la prueba. Se ve bien a distancia y la feria es en 6 días.")
+
+trays = running_order!(clients[:aroma], cats["carpinteria"], workshops[:maderas], "Bandejas de madera para barra", 60, "en_produccion", today - 30, operator,
+                       { "material" => "Pino", "dimensiones" => "400 × 250 × 40 mm", "acabado" => "Aceite natural" })
+pay_advance.(trays, today - 29)
+rejected_twice!(trays, inspector, photo)
+Escalation.decide!(trays, decision: "reasignar", by: operator,
+                   reason: "Las medidas siguen fuera de tolerancia después del reproceso. Aroma de Café prefiere esperar a otro taller.")
+
 # La dotación ya está en inspección: queda abierta, con dos ítems revisados, para seguirla desde el celular (HU-12)
 open_inspection = Inspection.start_for!(uniforms, by: inspector.name)
 open_inspection.items.first(2).each { |item| item.update!(result: "conforme", measurement: item.key == "medidas" ? "M: 72 cm de largo" : nil) }

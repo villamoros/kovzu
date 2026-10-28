@@ -30,7 +30,7 @@ Abre http://localhost:3000.
 
 ## Datos de ejemplo
 
-`db/seeds/demo.rb` carga en desarrollo clientes, talleres y pedidos en todos los estados: cotizando por enlace, propuesta enviada, muestra por revisar, inspección abierta, acta con desviación, saldo por registrar, entregados y un taller en mora. Solo se carga si no hay pedidos, así que para empezar de cero:
+`db/seeds/demo.rb` carga en desarrollo clientes, talleres y pedidos en todos los estados: cotizando por enlace, propuesta enviada, muestra por revisar, inspección abierta, acta con desviación, saldo por registrar, entregados, un taller en mora y tres lotes con segundo rechazo (por decidir, descuento esperando al cliente y reasignado con el anticipo por devolver). Solo se carga si no hay pedidos, así que para empezar de cero:
 
 ```bash
 bin/rails db:seed:replant   # borra los datos y vuelve a sembrar

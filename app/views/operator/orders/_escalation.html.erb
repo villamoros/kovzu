@@ -1,0 +1,97 @@
+<%# locals: (sub_order:) -%>
+<%# RN-06: tras el segundo rechazo el operador decide reasignar, negociar un descuento o cancelar. RN-05: el taller devuelve el anticipo. -%>
+<% pending = sub_order.pending_discount %>
+<% last = sub_order.escalations.last %>
+<div class="border-t border-line kz-card__body grid gap-5">
+  <h3 class="kz-overline">Decisión tras el segundo rechazo</h3>
+
+  <% if sub_order.escalado? && pending %>
+    <div class="kz-alert kz-alert--warning" role="status">
+      <%= kz_glyph :info, size: 20, class: "kz-alert__icon" %>
+      <div>
+        <p class="kz-alert__title">Descuento de <%= kz_money(pending.discount_cop) %> esperando al cliente</p>
+        <p class="kz-alert__body">El saldo quedaría en <%= kz_money(sub_order.expected_payment_cop(:saldo) - pending.discount_cop) %>. Si lo acepta, el lote se recibe y se habilita el saldo.</p>
+      </div>
+    </div>
+  <% elsif sub_order.escalado? %>
+    <div class="kz-alert kz-alert--danger" role="status">
+      <%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %>
+      <div>
+        <p class="kz-alert__title">El lote no pasó la reinspección</p>
+        <p class="kz-alert__body">
+          <% if last&.rechazada? %>
+            El cliente no aceptó el descuento: “<%= last.client_comment %>”. Elige otra salida.
+          <% else %>
+            Habla con el cliente y registra la decisión. Despacho y saldo siguen bloqueados.
+          <% end %>
+        </p>
+      </div>
+    </div>
+
+    <%= form_with model: Escalation.new, url: operator_sub_order_escalations_path(sub_order), class: "grid gap-4 group max-w-2xl" do |f| %>
+      <div class="grid gap-2" role="radiogroup" aria-label="Decisión">
+        <% balance = sub_order.expected_payment_cop(:saldo) %>
+        <% { "reasignar" => "Otro taller verificado fabrica el lote. #{sub_order.workshop.name} queda por fuera y devuelve el anticipo.",
+             "descuento" => "El cliente recibe el lote con un descuento sobre el saldo de #{kz_money(balance)}. Decide en el portal.",
+             "cancelar" => "Se cierra el subpedido. #{sub_order.workshop.name} devuelve el anticipo." }.each do |value, hint| %>
+          <% next if value == "descuento" && last&.rechazada? && last.descuento? %>
+          <label class="kz-check rounded-xl border border-line px-4 py-3 has-[:checked]:border-ink">
+            <%= f.radio_button :decision, value, required: true %>
+            <span class="grid gap-0.5">
+              <span class="font-medium"><%= Escalation::DECISIONS[value] %></span>
+              <span class="text-xs text-ink-muted"><%= hint %></span>
+            </span>
+          </label>
+        <% end %>
+      </div>
+      <div class="kz-field hidden group-has-[input[value=descuento]:checked]:grid">
+        <%= f.label :discount_cop, "Descuento (COP)", class: "kz-label" %>
+        <%= f.number_field :discount_cop, class: "kz-input", min: 1, max: balance - 1, step: 1000, inputmode: "numeric" %>
+        <p class="kz-hint">Se resta del saldo que el cliente le paga al taller. La comisión se calcula sobre el valor con descuento.</p>
+      </div>
+      <label class="kz-check hidden group-has-[input[value=cancelar]:checked]:flex">
+        <%= f.check_box :fee_refunded %>
+        <span>Devolver el fee de gestión (<%= kz_money(sub_order.order.management_fee_cop) %>): solo si la falla fue de KOVZU (RN-07).</span>
+      </label>
+      <div class="kz-field">
+        <%= f.label :reason, "Motivo", class: "kz-label" %>
+        <%= f.text_area :reason, class: "kz-textarea", rows: 3, required: true, placeholder: "El taller no corrigió las medidas en el reproceso. El cliente prefiere esperar a otro taller." %>
+      </div>
+      <button class="kz-btn kz-btn--primary justify-self-start" data-turbo-confirm="¿Registrar la decisión? Le avisamos al cliente.">Registrar decisión</button>
+    <% end %>
+  <% end %>
+
+  <% if sub_order.escalations.any? %>
+    <ul class="grid gap-4 text-sm">
+      <% sub_order.escalations.reverse_each do |escalation| %>
+        <li class="grid gap-1.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="font-medium"><%= escalation.decision_label %><%= " de #{kz_money(escalation.discount_cop)}" if escalation.descuento? %> · <span class="font-normal text-ink-muted"><%= escalation.workshop.name %></span></span>
+            <%= kz_status escalation.status, kind: :escalation %>
+          </div>
+          <span class="text-ink-muted"><%= kz_date(escalation.created_at.to_date) %> · <%= escalation.decided_by %> · <%= escalation.reason %></span>
+          <% if sub_order.workshop_id != escalation.workshop_id && (actas = sub_order.inspections.select { |past| past.cerrada? && past.created_at < escalation.created_at }).any? %>
+            <span class="text-ink-muted">Actas del lote de <%= escalation.workshop.name %>:
+              <% actas.each_with_index do |past, index| %><%= ", " if index.positive? %><%= link_to "Acta #{past.number}", operator_inspection_path(past), class: "kz-link" %><% end %></span>
+          <% end %>
+          <% if escalation.client_decided_at %>
+            <span class="text-ink-muted">Respuesta del cliente: <%= escalation.client_decided_by %>, <%= kz_date(escalation.client_decided_at.to_date) %><%= ". “#{escalation.client_comment}”" if escalation.client_comment.present? %></span>
+          <% end %>
+          <% if escalation.fee_refunded? %><span class="text-ink-muted">Se devuelve el fee de gestión al cliente.</span><% end %>
+          <% if escalation.refund_pending? %>
+            <%= form_with url: refund_operator_escalation_path(escalation), class: "flex flex-wrap items-end gap-2 rounded-xl bg-warning-soft/40 px-4 py-3" do %>
+              <p class="grow basis-56 text-sm"><strong><%= escalation.workshop.name %></strong> debe devolver el anticipo de <strong><%= kz_money(escalation.refund_cop) %></strong>.</p>
+              <div class="kz-field">
+                <label class="kz-label" for="received_on_<%= escalation.id %>">Recibido el</label>
+                <%= date_field_tag :received_on, Date.current, id: "received_on_#{escalation.id}", max: Date.current, class: "kz-input" %>
+              </div>
+              <button class="kz-btn kz-btn--outline kz-btn--sm">Registrar devolución</button>
+            <% end %>
+          <% elsif escalation.refund_received_on %>
+            <span class="text-success">Anticipo de <%= kz_money(escalation.refund_cop) %> devuelto el <%= kz_date(escalation.refund_received_on) %>.</span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

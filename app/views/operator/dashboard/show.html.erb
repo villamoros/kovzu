@@ -50,6 +50,19 @@
     </div>
   <% end %>
 
+  <% if (refunds = @dashboard.refunds_pending.to_a).any? %>
+    <div class="kz-alert kz-alert--warning" role="status">
+      <%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %>
+      <div>
+        <p class="kz-alert__title">Anticipos por devolver</p>
+        <p class="kz-alert__body">
+          <% refunds.each_with_index do |refund, index| %><%= "; " if index.positive? %><%= refund.workshop.name %>: <%= kz_money(refund.refund_cop) %> (<%= link_to refund.order.code, operator_order_path(refund.order), class: "kz-link" %>)<% end %>.
+          Regístralos en el pedido cuando lleguen (RN-05).
+        </p>
+      </div>
+    </div>
+  <% end %>
+
   <% if @dashboard.attention.any? %>
     <section class="kz-card">
       <div class="kz-card__header">

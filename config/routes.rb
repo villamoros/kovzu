@@ -32,6 +32,12 @@ Rails.application.routes.draw do
           post :reject_deviation, path: "rechazar-desviacion"
         end
       end
+      resources :escalations, path: "descuentos", only: [] do
+        member do
+          post :accept, path: "aceptar"
+          post :reject, path: "rechazar"
+        end
+      end
     end
     resources :samples, path: "muestras", only: [] do
       member do
@@ -72,6 +78,7 @@ Rails.application.routes.draw do
       resources :samples, path: "muestras", only: %i[new create]
       resources :payments, path: "pagos", only: %i[new create]
       resources :inspections, path: "inspecciones", only: :create
+      resources :escalations, path: "decision", only: :create
       member do
         post :finish_production, path: "produccion-terminada"
         post :deliver, path: "entregado"
@@ -85,6 +92,9 @@ Rails.application.routes.draw do
     end
     resources :payments, path: "pagos", only: [] do
       post :void, on: :member, path: "anular"
+    end
+    resources :escalations, path: "decisiones", only: [] do
+      post :refund, on: :member, path: "devolucion"
     end
     resources :commissions, path: "comisiones", only: :index
     resources :commission_cuts, path: "comisiones/cortes", only: %i[show create] do

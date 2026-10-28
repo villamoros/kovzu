@@ -6,7 +6,7 @@
       <%= kz_status proposal.status, kind: :proposal, label: (proposal.enviada? ? "Esperando al cliente" : nil) %>
     </div>
     <p class="text-sm text-ink-muted">
-      <%= proposal.workshop.name %> · <%= kz_money(proposal.workshop_price_cop) %> + fee <%= kz_money(proposal.management_fee_cop) %> =
+      <%= proposal.workshop.name %> · <%= kz_money(proposal.workshop_price_cop) %> + fee <%= proposal.fee_paid_before? ? "ya pagado" : kz_money(proposal.management_fee_cop) %> =
       <strong class="text-ink"><%= kz_money(proposal.total_cop) %></strong> · enviada el <%= kz_date(proposal.sent_at.to_date) %>
     </p>
     <% if proposal.cambios_solicitados? %>

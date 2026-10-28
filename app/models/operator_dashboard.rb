@@ -10,7 +10,7 @@ class OperatorDashboard
 
   def orders
     @orders ||= begin
-      scope = Order.open.includes(:client_company, proposals: :quote, sub_orders: [ :workshop, :category, :milestones, :samples, :inspections, :payments, :quotes ])
+      scope = Order.open.includes(:client_company, proposals: :quote, sub_orders: [ :workshop, :category, :milestones, :samples, :inspections, :payments, :quotes, :escalations ])
       scope = scope.where(id: SubOrder.where(workshop_id: filters[:workshop_id]).select(:order_id)) if filters[:workshop_id]
       scope = scope.where(id: SubOrder.where(category_id: filters[:category_id]).select(:order_id)) if filters[:category_id]
       scope = scope.where(client_company_id: filters[:client_company_id]) if filters[:client_company_id]
@@ -39,6 +39,9 @@ class OperatorDashboard
   def delinquent_workshops = Workshop.delinquent.order(:name)
 
   def filtered? = filters.any?
+
+  # RN-05: anticipos que un taller debe devolver tras una reasignación o cancelación (RN-06).
+  def refunds_pending = Escalation.refund_pending.includes(:workshop, sub_order: :order).order(:created_at)
 
   private
 
@@ -85,7 +88,9 @@ class OperatorDashboard
   # HU-13 / HU-19: desviación sin respuesta, segundo rechazo (RN-06) y saldo habilitado sin registrar.
   def quality_attention(order, sub_order)
     inspection = sub_order.inspections.last
-    if sub_order.escalado?
+    if sub_order.escalado? && sub_order.escalations.any?(&:esperando_cliente?)
+      [ Attention.new(order:, reason: "Descuento esperando la respuesta del cliente", tone: :warning, due_on: sub_order.escalations.last.created_at.to_date) ]
+    elsif sub_order.escalado?
       [ Attention.new(order:, reason: "Segundo rechazo del lote: decidir reasignar, descontar o cancelar", tone: :danger, due_on: inspection&.closed_at&.to_date) ]
     elsif sub_order.aprobado_con_desviacion?
       [ Attention.new(order:, reason: "Desviación esperando la decisión del cliente", tone: :warning, due_on: inspection&.closed_at&.to_date) ]

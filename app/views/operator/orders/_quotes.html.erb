@@ -4,7 +4,7 @@
 <div class="border-t border-line">
   <div class="flex flex-wrap items-center justify-between gap-3 px-6 pt-5">
     <h3 class="kz-overline">Cotizaciones</h3>
-    <% if sub_order.current_tech_sheet&.lista? && sub_order.open_quotes.count < SubOrder::MAX_QUOTES && sub_order.cotizando? %>
+    <% if (sub_order.current_tech_sheet&.lista? || sub_order.current_tech_sheet&.aceptada?) && sub_order.open_quotes.count < SubOrder::MAX_QUOTES && sub_order.cotizando? %>
       <%= link_to "Pedir otra", new_operator_sub_order_quote_request_path(sub_order), class: "kz-link text-sm" %>
     <% end %>
   </div>

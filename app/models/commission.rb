@@ -21,11 +21,11 @@ class Commission < ApplicationRecord
 
   delegate :order, to: :sub_order
 
-  # RN-08: porcentaje del convenio sobre el valor del taller antes de IVA.
+  # RN-08: porcentaje del convenio sobre el valor del taller antes de IVA, menos el descuento aceptado (RN-06).
   def self.accrue!(payment)
     sub_order = payment.sub_order
     workshop = sub_order.workshop
-    base = sub_order.amount_cop.to_i
+    base = sub_order.net_amount_cop
     percent = workshop.commission_percent
     create!(workshop:, sub_order:, payment:, base_cop: base, percent:, amount_cop: (base * percent / 100).round, accrued_on: payment.paid_on)
   end

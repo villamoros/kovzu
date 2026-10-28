@@ -28,7 +28,7 @@
   <% if proposal&.aceptada? %>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <%= render "kz/stat", label: "Entrega comprometida", value: kz_date(@order.promised_on) || "—", tone: :info %>
-      <%= render "kz/stat", label: "Total", value: kz_money(proposal.total_cop), meta: "Incluye fee de #{kz_money(proposal.management_fee_cop)}" %>
+      <%= render "kz/stat", label: "Total", value: kz_money(proposal.total_cop), meta: proposal.fee_paid_before? ? "Fee ya pagado" : "Incluye fee de #{kz_money(proposal.management_fee_cop)}" %>
       <%= render "kz/stat", label: "Anticipo al taller", value: kz_money(proposal.advance_cop), meta: "#{proposal.advance_percent} % al confirmar" %>
       <%= render "kz/stat", label: "Saldo", value: kz_money(proposal.balance_cop), meta: "Al aprobar la inspección" %>
     </div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_10_28_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_10_28_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -129,6 +129,26 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_120000) do
     t.index ["workshop_id"], name: "index_commissions_on_workshop_id"
   end
 
+  create_table "escalations", force: :cascade do |t|
+    t.bigint "sub_order_id", null: false
+    t.bigint "workshop_id", null: false
+    t.string "decision", null: false
+    t.string "status", default: "aplicada", null: false
+    t.text "reason", null: false
+    t.string "decided_by"
+    t.bigint "discount_cop"
+    t.text "client_comment"
+    t.string "client_decided_by"
+    t.datetime "client_decided_at"
+    t.bigint "refund_cop"
+    t.date "refund_received_on"
+    t.boolean "fee_refunded", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["sub_order_id"], name: "index_escalations_on_sub_order_id"
+    t.index ["workshop_id"], name: "index_escalations_on_workshop_id"
+  end
+
   create_table "inspection_items", force: :cascade do |t|
     t.bigint "inspection_id", null: false
     t.integer "position", default: 0, null: false
@@ -243,6 +263,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_120000) do
     t.datetime "decided_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "fee_paid_before", default: false, null: false
     t.index ["order_id"], name: "index_proposals_on_order_id"
     t.index ["quote_id"], name: "index_proposals_on_quote_id"
     t.index ["status"], name: "index_proposals_on_status"
@@ -337,6 +358,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_120000) do
     t.integer "rejection_count", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "discount_cop", default: 0, null: false
+    t.datetime "reassigned_at"
     t.index ["category_id"], name: "index_sub_orders_on_category_id"
     t.index ["order_id"], name: "index_sub_orders_on_order_id"
     t.index ["status"], name: "index_sub_orders_on_status"
@@ -424,6 +447,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_120000) do
   add_foreign_key "commissions", "payments"
   add_foreign_key "commissions", "sub_orders"
   add_foreign_key "commissions", "workshops"
+  add_foreign_key "escalations", "sub_orders"
+  add_foreign_key "escalations", "workshops"
   add_foreign_key "inspection_items", "inspections"
   add_foreign_key "inspections", "inspections", column: "reinspection_of_id"
   add_foreign_key "inspections", "sub_orders"

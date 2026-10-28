@@ -18,7 +18,7 @@
         <div class="kz-card__header"><h2 class="kz-card__title">Lo que pagas</h2></div>
         <dl class="kz-card__body grid gap-3 text-sm">
           <div class="flex justify-between gap-6"><dt>Producción · <%= @proposal.workshop.name %></dt><dd class="m-0 tabular-nums"><%= kz_money(@proposal.workshop_price_cop) %></dd></div>
-          <div class="flex justify-between gap-6"><dt>Fee de gestión KOVZU</dt><dd class="m-0 tabular-nums"><%= kz_money(@proposal.management_fee_cop) %></dd></div>
+          <div class="flex justify-between gap-6"><dt>Fee de gestión KOVZU</dt><dd class="m-0 tabular-nums"><%= @proposal.fee_paid_before? ? "Ya pagado" : kz_money(@proposal.management_fee_cop) %></dd></div>
           <div class="flex justify-between gap-6 border-t border-line pt-3 font-semibold"><dt>Total</dt><dd class="m-0 tabular-nums"><%= kz_money(@proposal.total_cop) %></dd></div>
         </dl>
         <div class="kz-card__footer grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">

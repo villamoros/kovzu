@@ -66,12 +66,7 @@
       <% end %>
     </div>
 
-    <% if sub_order.escalado? %>
-      <div class="kz-alert kz-alert--danger" role="status">
-        <%= kz_glyph :alert, size: 20, class: "kz-alert__icon" %>
-        <div><p class="kz-alert__title">Segundo rechazo del lote</p><p class="kz-alert__body">Decide con el cliente: reasignar a otro taller, negociar un descuento o cancelar (RN-06).</p></div>
-      </div>
-    <% elsif sub_order.aprobado_con_desviacion? %>
+    <% if sub_order.aprobado_con_desviacion? %>
       <p class="text-sm text-ink-muted">Esperando que el cliente acepte o rechace la desviación. El saldo se habilita con su respuesta.</p>
     <% end %>
 

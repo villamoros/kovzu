@@ -6,7 +6,7 @@ module Portal
     end
 
     def show
-      @order = current_company.orders.includes({ proposals: :quote }, sub_orders: [ :category, :workshop, :milestones, :tech_sheets, :inspections, :payments, { samples: { photos_attachments: :blob } } ])
+      @order = current_company.orders.includes({ proposals: :quote }, sub_orders: [ :category, :workshop, :milestones, :tech_sheets, :inspections, :payments, :escalations, { samples: { photos_attachments: :blob } } ])
                               .find_by!(code: params[:id])
     end
   end
