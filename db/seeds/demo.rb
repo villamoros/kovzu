@@ -172,3 +172,26 @@ bags = running_order!(clients[:aroma], cats["empaques"], workshops[:carton], "Bo
 pay_advance.(bags, today - 14)
 bags.milestones.where(kind: %w[anticipo muestra produccion]).find_each { |m| m.complete!(on: [ m.committed_on, today ].min) }
 inspected!(bags, inspector, operator, nonconforming: "medidas", photo: seed_file.("muestra-exhibidor.png", "image/png"))
+
+# Lote aprobado con el saldo por registrar (HU-19)
+caps = running_order!(clients[:ferre], cats["confeccion"], workshops[:alameda], "Gorras bordadas", 120, "en_produccion", today - 12, operator,
+                      { "material" => "Drill de algodón", "tallas" => "Talla única ajustable", "marcacion" => "Logo bordado al frente, 6 cm" })
+pay_advance.(caps, today - 11)
+caps.milestones.where(kind: %w[anticipo muestra produccion]).find_each { |m| m.complete!(on: [ m.committed_on, today ].min) }
+inspected!(caps, inspector, operator)
+
+# La dotación ya está en inspección: queda abierta, con dos ítems revisados, para seguirla desde el celular (HU-12)
+open_inspection = Inspection.start_for!(uniforms, by: inspector.name)
+open_inspection.items.first(2).each { |item| item.update!(result: "conforme", measurement: item.key == "medidas" ? "M: 72 cm de largo" : nil) }
+
+# La caja plegadiza se cotiza por enlace (HU-05): Litografía Pance ya respondió y Cartón Valle tiene el enlace abierto
+box = Order.find_by!(code: "KZ-0001").sub_orders.first
+box_sheet = box.current_tech_sheet
+box_sheet.revise!({ "fields" => box_sheet.fields.merge("impresion" => "Full color", "entrega" => "Plana"),
+                    "acceptance_criteria" => "Medidas internas ± 1 mm; impresión contra el arte aprobado; 2.000 unidades planas en paquetes de 100." }, by: operator)
+box_sheet.mark_ready!(by: operator)
+link_quotes = box.request_quotes!([ workshops[:carton].id, workshops[:lito].id ], by: operator).index_by(&:workshop)
+link_quotes[workshops[:lito]].submit_from_link!({ price_cop: 2_350_000, lead_days: 9, conditions: "Incluye troquel y laminado. Anticipo del 50 %.",
+                                                  valid_until: today + 12 }, accept_sheet: "1")
+
+puts "Enlace de cotización de Cartón Valle: /cotizar/#{link_quotes[workshops[:carton]].token}"
