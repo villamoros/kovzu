@@ -136,6 +136,34 @@ class InspectionTest < ActiveSupport::TestCase
     assert_no_match "laura@aromas.co", workshop_mail.body.encoded
   end
 
+  test "HU-13: si falla el correo al taller, el reintento no le vuelve a escribir al cliente" do
+    @sub_order.workshop.update!(email: "taller@cartonvalle.co")
+    inspection = fill_inspection(start)
+    inspection.close!(result: "aprobado", user: @inspector)
+
+    failing_workshop_mail = Module.new do
+      def self.delivering_email(mail) = (raise "Resend no responde" if mail.to == [ "taller@cartonvalle.co" ])
+    end
+    ActionMailer::Base.register_interceptor(failing_workshop_mail)
+    begin
+      assert_enqueued_with(job: InspectionReportJob) do
+        assert_emails(1) { InspectionReportJob.perform_now(inspection) }
+      end
+    ensure
+      ActionMailer::Base.unregister_interceptor(failing_workshop_mail)
+    end
+    inspection.reload
+    assert inspection.client_report_sent_at
+    assert_nil inspection.workshop_report_sent_at
+    assert_nil inspection.report_sent_at
+
+    assert_emails(1) { InspectionReportJob.perform_now(inspection) }
+    assert_equal [ "taller@cartonvalle.co" ], ActionMailer::Base.deliveries.last.to
+    assert inspection.reload.report_sent_at
+
+    assert_no_emails { InspectionReportJob.perform_now(inspection) }
+  end
+
   private
 
   def start = Inspection.start_for!(@sub_order, by: "Pedro")

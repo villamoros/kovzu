@@ -5,7 +5,7 @@ class Inspection < ApplicationRecord
   RESULTS = StatusCatalog.keys(:inspection_result).freeze
   REWORK_BUSINESS_DAYS = 5
   # Lo único que cambia en un acta cerrada: la decisión del cliente sobre la desviación y el envío del acta.
-  MUTABLE_WHEN_CLOSED = %w[deviation_status deviation_comment deviation_decided_by deviation_decided_at report_sent_at updated_at].freeze
+  MUTABLE_WHEN_CLOSED = %w[deviation_status deviation_comment deviation_decided_by deviation_decided_at report_sent_at client_report_sent_at workshop_report_sent_at updated_at].freeze
 
   enum :status, StatusCatalog.enum_for(:inspection), default: "abierta", validate: true
 

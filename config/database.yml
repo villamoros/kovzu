@@ -80,23 +80,7 @@ test:
 # URL environment variable explicitly:
 #
 #   production:
-#     url: <%= ENV["MY_APP_DATABASE_URL"] %>
-#
-# Read https://guides.rubyonrails.org/configuring.html#configuring-a-database
-# for a full overview on how database connection configuration can be specified.
-#
-production:
-  primary: &primary_production
-    <<: *default
-    # Hosted Postgres (Neon or Supabase) connection string. Solid Cache,
-    # Queue and Cable share it so a single free database is enough.
-    url: <%= ENV["DATABASE_URL"] %>
-  cache:
-    <<: *primary_production
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    migrations_paths: db/queue_migrate
-  cable:
-    <<: *primary_production
-    migrations_paths: db/cable_migrate
+  <<: *default
+  # Hosted Postgres (Neon or Supabase) connection string. Las tablas de Solid Queue viven
+  # en esta misma base (db/migrate), así basta una base gratuita.
+  url: <%= ENV["DATABASE_URL"] %>
