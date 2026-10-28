@@ -1,0 +1,9 @@
+<%# locals: (overline:, title:, points:) -%>
+<%# Mensaje del panel de marca. El título termina con el punto lima de la firma. -%>
+<p class="kz-auth__overline"><%= overline %></p>
+<h1 class="kz-auth__title"><%= safe_join(title, tag.br) %><span class="text-accent">.</span></h1>
+<ul class="kz-auth__points">
+  <% points.each do |point| %>
+    <li><%= point %></li>
+  <% end %>
+</ul>

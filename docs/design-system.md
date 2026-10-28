@@ -13,6 +13,8 @@ Base visual de la app, sacada del *Manual de identidad v1.0* (27 oct 2026). Func
 | `app/javascript/controllers/theme_controller.js` | Botón de modo claro/oscuro. Recuerda la elección y, si no hay, sigue al sistema. |
 | `app/javascript/controllers/dismiss_controller.js` | Cierra avisos, a mano o tras unos segundos. |
 | `app/assets/images/kovzu/` | Logo (símbolo, firma corta y firma completa, positivo y negativo) y los 6 iconos de capacidad. |
+| `app/views/layouts/auth.html.erb` | Diseño de entrar y crear cuenta: panel azul con retícula y rutas (`layouts/_auth_network`), mensaje (`sessions/_pitch`) y la tarjeta de Clerk. Las clases son `kz-auth*`. |
+| `app/javascript/controllers/clerk_controller.js` | Monta Clerk con los textos en español (`vendor/javascript/clerk-localization-es.js`, es-MX) y viste la tarjeta de acceso con los tokens (`var(--accent)`, `var(--line-strong)`…), así sigue al tema. |
 | `app/controllers/design_system_controller.rb` + `app/views/design_system/show.html.erb` | Catálogo vivo para revisar todo en la app. |
 
 ## Instalación en la app

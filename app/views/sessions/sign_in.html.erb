@@ -1,7 +1,16 @@
 <% content_for :title, "Entrar · KOVZU" %>
 
-<section class="mx-auto grid max-w-md place-items-center px-4 py-16">
-  <div data-controller="clerk" data-clerk-component-value="sign-in" class="w-full">
-    <div class="kz-card h-96 animate-pulse"></div>
-  </div>
-</section>
+<% content_for :aside do %>
+  <%= render "sessions/pitch",
+        overline: "Red de manufactura verificada",
+        title: [ "Un pedido.", "Una red coordinada" ],
+        points: [
+          "Talleres verificados por capacidad productiva",
+          "Propuestas, ficha técnica y pagos en un solo lugar",
+          "Seguimiento e inspección documentada de cada pedido"
+        ] %>
+<% end %>
+
+<div data-controller="clerk" data-clerk-component-value="sign-in" class="kz-auth__clerk">
+  <div class="kz-auth__placeholder h-[26rem]"></div>
+</div>
