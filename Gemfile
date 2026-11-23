@@ -70,7 +70,7 @@ group :test do
 end
 
 # Authentication (Clerk)
-gem "clerk-sdk-ruby", "~> 8.0", require: "clerk"
+gem "clerk-sdk-ruby", "~> 9.0", require: "clerk"
 
 # Acta de inspección en PDF (HU-13)
 gem "prawn", "~> 2.5"
